@@ -1,3 +1,4 @@
+[![Lean 4](https://img.shields.io/github/actions/workflow/status/catskillsresearch/scott1982/build.yml?label=Lean%204)](https://github.com/catskillsresearch/scott1982/actions/workflows/build.yml)
 # scott1982
 
 Lean 4 formalization of Dana Scott's **1982** *Domains for Denotational Semantics*
