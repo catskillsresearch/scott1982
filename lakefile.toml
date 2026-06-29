@@ -1,0 +1,16 @@
+name = "scott1982"
+version = "0.1.0"
+keywords = ["domain-theory", "scott-1982", "information-systems", "lean4"]
+defaultTargets = ["Scott1982"]
+
+[leanOptions]
+pp.unicode.fun = true
+relaxedAutoImplicit = true
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.30.0"
+
+[[lean_lib]]
+name = "Scott1982"
