@@ -19,6 +19,8 @@ import Scott1982.Proposition56
 import Scott1982.Product
 import Scott1982.Proposition62
 import Scott1982.Sum
+import Scott1982.Proposition64
+import Scott1982.Factoid65
 import Scott1982.FunctionSpace
 import Scott1982.Fixpoint
 import Scott1982.DomainEquation

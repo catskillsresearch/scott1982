@@ -48,7 +48,7 @@ flowchart TB
   S3["§3 Elements<br/><i>Def 3.1 + factoids</i>"]
   S4["§4 Lattices & topology<br/><i>factoids 4.x</i>"]
   S5["§5 Approximable mappings<br/><i>Def 5.1–5.2, Prop 5.3–5.6</i>"]
-  S6["§6 Products & sums<br/><i>Def 6.1/6.3, Prop 6.2/6.4</i>"]
+  S6["§6 Products & sums<br/><i>Def 6.1/6.3, Prop 6.2/6.4, Factoid 6.5</i>"]
   S7["§7 Function space<br/><i>Def 7.1, Thm 7.2–7.3, Prop 7.4</i>"]
   S8["§8 Domain equations<br/><i>factoids 8.x</i>"]
 
@@ -82,7 +82,8 @@ flowchart TD
   Ap["Approximable.lean<br/>Def 5.1–5.2"]
   P5["Proposition5*.lean"]
   Pr["Product.lean / Proposition62.lean<br/>Def 6.1, Prop 6.2"]
-  Su["Sum.lean<br/>Def 6.3, Prop 6.4"]
+  Su["Sum.lean / Proposition64.lean<br/>Def 6.3, Prop 6.4"]
+  F65["Factoid65.lean<br/>unit domain"]
   FS["FunctionSpace.lean<br/>Def 7.1, Thm 7.2"]
   Fx["Fixpoint.lean<br/>Thm 7.3, Prop 7.4"]
   DE["DomainEquation.lean<br/>§8 constructions"]
@@ -98,6 +99,8 @@ flowchart TD
   Ap --> P5
   Ap --> Pr
   Ap --> Su
+  P5 --> F65
+  F3 --> F65
   Pr --> FS
   Ap --> FS
   FS --> Fx
@@ -450,10 +453,12 @@ flowchart TD
   C["Constructive.lean<br/><i>∪' prelude</i>"]
   P23["Proposition 2.3<br/><i>Proposition23.lean</i>"]
   Ap["Approximable.lean<br/><i>§5 maps</i>"]
+  P56["Proposition 5.6<br/><i>Proposition56.lean</i>"]
+  F33["Factoid 3.3<br/><i>Factoid33.lean</i>"]
   D61["Definition 6.1<br/><i>Product.lean</i>"]
   P62["Proposition 6.2<br/><i>Proposition62.lean</i>"]
   D63["Definition 6.3<br/><i>Sum.lean</i>"]
-  P64["Proposition 6.4<br/><i>Sum.lean</i>"]
+  P64["Proposition 6.4<br/><i>Proposition64.lean</i>"]
   F65["Factoid 6.5<br/><i>Factoid65.lean</i>"]
   C --> D61
   P23 --> D61
@@ -463,14 +468,16 @@ flowchart TD
   P23 --> D63
   D63 --> P64
   Ap --> P64
-  P62 --> F65
-  P64 --> F65
+  P56 --> F65
+  F33 --> F65
 ```
 
 `Product.lean` (Def 6.1 / `productSystem`) imports `Constructive` and `Proposition23`.
 `Proposition62.lean` adds approximable `fst`/`snd`/`⟨f,g⟩` on top of `Approximable` /
-Prop 5.3–5.5. `Sum.lean` (Def 6.3 / `sumSystem`) is parallel to `Product.lean`; Prop 6.4
-will add injections/copairing. Factoid 6.5 (unit domain) sits above both universal properties.
+Prop 5.3–5.5. `Sum.lean` (Def 6.3 / `sumSystem`) is parallel to `Product.lean`;
+`Proposition64.lean` adds `inl`/`inr`/`[f,g]`. `Factoid65.lean` (unit domain) imports
+Prop 5.6 (`constMap`) and Factoid 3.3 (`⊥`); Scott places it after the product remarks,
+before the sum construction.
 
 #### Definition 6.1
 * **Mathematical Target:** Product information system `A × B` on tagged tokens.
@@ -495,13 +502,17 @@ will add injections/copairing. Factoid 6.5 (unit domain) sits above both univers
 
 #### Proposition 6.4
 * **Mathematical Target:** Sum is an information system; injections and copairing.
-* **Lean File:** `Scott1982/Sum.lean` / `Proposition64.lean`
-* **Proof Notes:** **Not Yet**
+* **Lean File:** `Scott1982/Proposition64.lean`
+* **Proof Notes:** **Pass** — `inlMap` / `inrMap` / `copairMap`; `comp_copairMap_inlMap` /
+  `comp_copairMap_inrMap`; `copairMap_botElement`; uniqueness via relation extensionality
+  (choice-free `lft`/`rht` emptiness dichotomy). Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 6.5
 * **Mathematical Target:** Unit domain `1` with unique element `⊥`; terminal/initial mapping facts Scott records at end of §6.
 * **Lean File:** `Scott1982/Factoid65.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `unitSystem` on `PUnit`; `unitElement_eq_bot`;
+  `approxMap_from_unit_eq_const` / `approxMap_to_unit_eq_const`;
+  `toElement_constMap_bot`. Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 ---
 

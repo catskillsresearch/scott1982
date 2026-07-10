@@ -314,6 +314,34 @@ theorem rhtFinset_singleton_bot :
   · intro hy
     exact False.elim (Finset.notMem_empty y hy)
 
+theorem lftFinset_funion (u v : Finset (SumToken α β)) :
+    lftFinset (u ∪' v) = lftFinset u ∪' lftFinset v := by
+  ext x
+  constructor
+  · intro hx
+    have : SumToken.left x ∈ u ∪' v := (mem_lftFinset).1 hx
+    rcases mem_funion.mp this with h | h
+    · exact mem_funion.mpr (Or.inl ((mem_lftFinset).2 h))
+    · exact mem_funion.mpr (Or.inr ((mem_lftFinset).2 h))
+  · intro hx
+    rcases mem_funion.mp hx with h | h
+    · exact (mem_lftFinset).2 (mem_funion.mpr (Or.inl ((mem_lftFinset).1 h)))
+    · exact (mem_lftFinset).2 (mem_funion.mpr (Or.inr ((mem_lftFinset).1 h)))
+
+theorem rhtFinset_funion (u v : Finset (SumToken α β)) :
+    rhtFinset (u ∪' v) = rhtFinset u ∪' rhtFinset v := by
+  ext y
+  constructor
+  · intro hy
+    have : SumToken.right y ∈ u ∪' v := (mem_rhtFinset).1 hy
+    rcases mem_funion.mp this with h | h
+    · exact mem_funion.mpr (Or.inl ((mem_rhtFinset).2 h))
+    · exact mem_funion.mpr (Or.inr ((mem_rhtFinset).2 h))
+  · intro hy
+    rcases mem_funion.mp hy with h | h
+    · exact (mem_rhtFinset).2 (mem_funion.mpr (Or.inl ((mem_rhtFinset).1 h)))
+    · exact (mem_rhtFinset).2 (mem_funion.mpr (Or.inr ((mem_rhtFinset).1 h)))
+
 /-- Consistency for the separated sum (Scott 6.3(iii)). -/
 def SumCon (u : Finset (SumToken α β)) : Prop :=
   (lftFinset u ∈ A.Con ∧ rhtFinset u = ∅) ∨
