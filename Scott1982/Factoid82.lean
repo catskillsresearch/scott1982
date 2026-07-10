@@ -731,6 +731,65 @@ theorem LamConN_fun_FunCon_right {n : ℕ} {u : Finset (RawLamToken α)}
     LamConN A n (lamOutputUnion s) :=
   hFun s hs hIn
 
+/-- If `u` has function tokens at stage `n`, some earlier right branch supplies FunCon. -/
+theorem LamConN_exists_FunCon {n : ℕ} {u : Finset (RawLamToken α)}
+    (hu : LamConN A n u) (hne : lamFunFinset u ≠ ∅) :
+    ∃ k, k + 1 ≤ n ∧ lamAtomFinset u = ∅ ∧
+      (∀ p ∈ lamFunFinset u,
+        LamConN A k (listToFinset p.1) ∧ LamConN A k (listToFinset p.2)) ∧
+      (∀ s ⊆ lamFunFinset u,
+        LamConN A k (lamInputUnion s) → LamConN A k (lamOutputUnion s)) := by
+  induction n generalizing u with
+  | zero => exact False.elim (hne hu.2)
+  | succ n ih =>
+    rcases hu with hu | ⟨hA, hWF, hFun⟩
+    · rcases ih hu hne with ⟨k, hk, H⟩
+      exact ⟨k, Nat.le_succ_of_le hk, H⟩
+    · exact ⟨n, Nat.le_refl _, hA, hWF, hFun⟩
+
+/-- Atom/bot-only sets that are consistent at stage `n` are consistent at stage `0`. -/
+theorem LamConN_down_atom {n : ℕ} {u : Finset (RawLamToken α)}
+    (hu : LamConN A n u) (hF : lamFunFinset u = ∅) : LamConN A 0 u := by
+  induction n generalizing u with
+  | zero => exact hu
+  | succ n ih =>
+    rcases hu with hu | ⟨hA, _, _⟩
+    · exact ih hu hF
+    · exact ⟨by rw [hA]; exact A.con_empty, hF⟩
+
+/-- Apply a stage-`k` FunCon at stage `m ≥ k` when the input union has no function tokens. -/
+theorem LamConN_FunCon_mono_atom {k m : ℕ} (hkm : k ≤ m)
+    {u : Finset (RawLamToken α)}
+    (hFun : ∀ s ⊆ lamFunFinset u,
+      LamConN A k (lamInputUnion s) → LamConN A k (lamOutputUnion s))
+    {s : Finset (List (RawLamToken α) × List (RawLamToken α))}
+    (hs : s ⊆ lamFunFinset u)
+    (hIn : LamConN A m (lamInputUnion s))
+    (hF : lamFunFinset (lamInputUnion s) = ∅) :
+    LamConN A m (lamOutputUnion s) := by
+  have h0 := LamConN_down_atom A hIn hF
+  have hk : LamConN A k (lamInputUnion s) := LamConN_mono A (Nat.zero_le k) h0
+  exact LamConN_mono A hkm (hFun s hs hk)
+
+/-- Full FunCon at stage `n+1` (uses `exists_FunCon` + atom-input lift).
+Nested function tokens in the input union remain for the general `ent_con` argument. -/
+theorem LamConN_fun_FunCon_atom {n : ℕ} {u : Finset (RawLamToken α)}
+    (hu : LamConN A (n + 1) u)
+    {s : Finset (List (RawLamToken α) × List (RawLamToken α))}
+    (hs : s ⊆ lamFunFinset u) (hIn : LamConN A n (lamInputUnion s))
+    (hF : lamFunFinset (lamInputUnion s) = ∅) :
+    LamConN A n (lamOutputUnion s) := by
+  if hempty : s = ∅ then
+    subst hempty
+    simpa [lamOutputUnion_empty] using LamConN_empty A n
+  else
+    have hne : lamFunFinset u ≠ ∅ := by
+      obtain ⟨p, hp⟩ := Finset.nonempty_of_ne_empty hempty
+      exact Finset.ne_empty_of_mem (hs hp)
+    rcases LamConN_exists_FunCon A hu hne with ⟨k, hk, _, _, hFun⟩
+    have hkn : k ≤ n := Nat.le_of_succ_le_succ hk
+    exact LamConN_FunCon_mono_atom A hkn hFun hs hIn hF
+
 /-- Membership entailment at a fixed stage (Scott (v) / ent_refl on raw tokens). -/
 theorem LamEntN_of_mem {n : ℕ} {u : Finset (RawLamToken α)} {t : RawLamToken α}
     (hu : LamConN A n u) (ht : t ∈ u) : LamEntN A n u t := by
