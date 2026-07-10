@@ -668,11 +668,11 @@ flowchart LR
 * **Lean File:** `Scott1982/Factoid82.lean`
 * **Proof Notes:** **Partial** — nested `RawLamToken` (bot/atom/funTok); staged `LamConN` /
   `LamEntN` (Scott (4)–(11)) because FunCon-style clause (7) is non-positive in an
-  inductive; well-formed `LamToken` subtype; Def 2.1 fragments `con_subset` /
-  `con_sing` / `ent_bot` via `LamTokenCon` / `LamTokenEnt`. Full `InfoSys`
-  (`ent_refl` / `ent_con` / `ent_trans` on funTok) and unfold into
-  `sumSystem A (functionSystem D D)` remain. Axioms of proved lemmas ⊆
-  `{propext, Quot.sound}`.
+  inductive; well-formed `LamToken` subtype; Def 2.1 `con_subset` / `con_sing` /
+  `ent_bot` / **`ent_refl`** (`LamEntN_of_mem` / `LamTokenEnt_of_mem`); `ent_con` for
+  bot/atom. Remaining: `ent_con`/`ent_trans` on `funTok` (FunCon on insert + combined
+  witness), `lambdaSystem`, unfold into `sumSystem A (functionSystem D D)`. Axioms of
+  proved lemmas ⊆ `{propext, Quot.sound}`.
 
 #### Factoid 8.3
 * **Mathematical Target:** Universal domain remarks (`V`, retract `U`).

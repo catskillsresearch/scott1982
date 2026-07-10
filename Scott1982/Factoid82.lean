@@ -11,10 +11,10 @@ tokens whose components and FunCon checks live at stage `n`. Then
 `LamCon u := ∃ n, LamConN n u`. Entailment is staged the same way as `LamEntN`
 (Scott (8)–(11)).
 
-**Status:** `RawLamToken` / `LamToken`, staged `LamCon` / `LamEnt`, and Def 2.1
-fragments `con_subset` / `con_sing` / `ent_bot` are proved. Full `InfoSys`
-(`ent_refl` / `ent_con` / `ent_trans`, especially on `funTok`) and the unfolding
-into `sumSystem A (functionSystem D D)` remain.
+**Status:** `RawLamToken` / `LamToken`; staged `LamCon` / `LamEnt`; Def 2.1
+`con_subset`, `con_sing`, `ent_bot`, **`ent_refl`** (`LamTokenEnt_of_mem`);
+`ent_con` for bot/atom. Remaining: `ent_con` / `ent_trans` on `funTok`, full
+`lambdaSystem`, unfold into `sumSystem A (functionSystem D D)`.
 -/
 
 namespace Scott1982
@@ -212,6 +212,58 @@ theorem lamFunFinset_mono {u v : Finset (RawLamToken α)} (h : v ⊆ u) :
     lamFunFinset v ⊆ lamFunFinset u :=
   fun _ hp => mem_lamFunFinset.2 (h (mem_lamFunFinset.1 hp))
 
+theorem lamAtomFinset_insert_bot (u : Finset (RawLamToken α)) :
+    lamAtomFinset (insert (.bot : RawLamToken α) u) = lamAtomFinset u := by
+  ext x; simp only [mem_lamAtomFinset, Finset.mem_insert]
+  constructor
+  · rintro (h | h); exacts [False.elim (nomatch h), h]
+  · exact Or.inr
+
+theorem lamAtomFinset_insert_atom (u : Finset (RawLamToken α)) (x : α) :
+    lamAtomFinset (insert (.atom x) u) = insert x (lamAtomFinset u) := by
+  ext y; simp only [Finset.mem_insert, mem_lamAtomFinset]
+  constructor
+  · rintro (h | h)
+    · exact Or.inl (RawLamToken.atom.inj h)
+    · exact Or.inr h
+  · rintro (rfl | h)
+    · exact Or.inl rfl
+    · exact Or.inr h
+
+theorem lamAtomFinset_insert_funTok (u : Finset (RawLamToken α))
+    (xs ys : List (RawLamToken α)) :
+    lamAtomFinset (insert (.funTok xs ys) u) = lamAtomFinset u := by
+  ext x; simp only [mem_lamAtomFinset, Finset.mem_insert]
+  constructor
+  · rintro (h | h); exacts [False.elim (nomatch h), h]
+  · exact Or.inr
+
+theorem lamFunFinset_insert_bot (u : Finset (RawLamToken α)) :
+    lamFunFinset (insert (.bot : RawLamToken α) u) = lamFunFinset u := by
+  ext p; simp only [mem_lamFunFinset, Finset.mem_insert]
+  constructor
+  · rintro (h | h); exacts [False.elim (nomatch h), h]
+  · exact Or.inr
+
+theorem lamFunFinset_insert_atom (u : Finset (RawLamToken α)) (x : α) :
+    lamFunFinset (insert (.atom x) u) = lamFunFinset u := by
+  ext p; simp only [mem_lamFunFinset, Finset.mem_insert]
+  constructor
+  · rintro (h | h); exacts [False.elim (nomatch h), h]
+  · exact Or.inr
+
+theorem lamFunFinset_insert_funTok (u : Finset (RawLamToken α))
+    (xs ys : List (RawLamToken α)) :
+    lamFunFinset (insert (.funTok xs ys) u) = insert (xs, ys) (lamFunFinset u) := by
+  ext p; simp only [Finset.mem_insert, mem_lamFunFinset]
+  constructor
+  · rintro (h | h)
+    · exact Or.inl (Prod.ext (RawLamToken.funTok.inj h).1 (RawLamToken.funTok.inj h).2)
+    · exact Or.inr h
+  · rintro (rfl | h)
+    · exact Or.inl rfl
+    · exact Or.inr h
+
 private def lamInUnionInsert [DecidableEq (RawLamToken α)] :
     List (RawLamToken α) × List (RawLamToken α) → Finset (RawLamToken α) →
       Finset (RawLamToken α)
@@ -251,6 +303,50 @@ theorem lamInputUnion_empty :
 theorem lamOutputUnion_empty :
     lamOutputUnion (∅ : Finset (List (RawLamToken α) × List (RawLamToken α))) = ∅ := by
   rfl
+
+theorem mem_lamInputUnion {s : Finset (List (RawLamToken α) × List (RawLamToken α))}
+    {t : RawLamToken α} :
+    t ∈ lamInputUnion s ↔ ∃ p ∈ s, t ∈ listToFinset p.1 := by
+  have aux (m : Multiset (List (RawLamToken α) × List (RawLamToken α))) :
+      t ∈ Multiset.foldr (lamInUnionInsert (α := α)) ∅ m ↔
+        ∃ p ∈ m, t ∈ listToFinset p.1 := by
+    refine Multiset.induction_on m ?_ ?_
+    · constructor
+      · intro ht; exact False.elim (Finset.notMem_empty t ht)
+      · rintro ⟨_, hp, _⟩; exact False.elim (by cases hp)
+    · intro p rest ih
+      simp only [Multiset.foldr_cons, lamInUnionInsert, mem_funion, ih, Multiset.mem_cons]
+      constructor
+      · rintro (ht | ⟨q, hq, ht⟩)
+        · exact ⟨p, Or.inl rfl, ht⟩
+        · exact ⟨q, Or.inr hq, ht⟩
+      · rintro ⟨q, hq, ht⟩
+        rcases hq with rfl | hq
+        · exact Or.inl ht
+        · exact Or.inr ⟨q, hq, ht⟩
+  simpa [lamInputUnion] using aux s.1
+
+theorem mem_lamOutputUnion {s : Finset (List (RawLamToken α) × List (RawLamToken α))}
+    {t : RawLamToken α} :
+    t ∈ lamOutputUnion s ↔ ∃ p ∈ s, t ∈ listToFinset p.2 := by
+  have aux (m : Multiset (List (RawLamToken α) × List (RawLamToken α))) :
+      t ∈ Multiset.foldr (lamOutUnionInsert (α := α)) ∅ m ↔
+        ∃ p ∈ m, t ∈ listToFinset p.2 := by
+    refine Multiset.induction_on m ?_ ?_
+    · constructor
+      · intro ht; exact False.elim (Finset.notMem_empty t ht)
+      · rintro ⟨_, hp, _⟩; exact False.elim (by cases hp)
+    · intro p rest ih
+      simp only [Multiset.foldr_cons, lamOutUnionInsert, mem_funion, ih, Multiset.mem_cons]
+      constructor
+      · rintro (ht | ⟨q, hq, ht⟩)
+        · exact ⟨p, Or.inl rfl, ht⟩
+        · exact ⟨q, Or.inr hq, ht⟩
+      · rintro ⟨q, hq, ht⟩
+        rcases hq with rfl | hq
+        · exact Or.inl ht
+        · exact Or.inr ⟨q, hq, ht⟩
+  simpa [lamOutputUnion] using aux s.1
 
 /-! ## Staged consistency -/
 
@@ -531,6 +627,7 @@ def LamEntN : ℕ → Finset (RawLamToken α) → RawLamToken α → Prop
               lamAtomFinset u ≠ ∅ ∧ A.Ent (lamAtomFinset u) x
         | .funTok u' v' =>
             LamConN A (n + 1) u ∧ lamAtomFinset u = ∅ ∧
+              LamConN A n (listToFinset u') ∧ LamConN A n (listToFinset v') ∧
               ∃ s ⊆ lamFunFinset u,
                 (∀ p ∈ s, ∀ t ∈ listToFinset p.1, LamEntN n (listToFinset u') t) ∧
                   (∀ t ∈ listToFinset v', LamEntN n (lamOutputUnion s) t)
@@ -571,6 +668,114 @@ theorem LamEnt_con {u : Finset (RawLamToken α)} {t : RawLamToken α}
   rcases ht with ⟨n, ht⟩
   exact ⟨n, LamEntN_con A ht⟩
 
+/-! ## Inversion lemmas for staged Con -/
+
+theorem LamConN_fun_empty {n : ℕ} {u : Finset (RawLamToken α)}
+    (hu : LamConN A n u) (hne : lamAtomFinset u ≠ ∅) : lamFunFinset u = ∅ := by
+  induction n generalizing u with
+  | zero => exact hu.2
+  | succ n ih =>
+    rcases hu with hu | ⟨hA, _, _⟩
+    · exact ih hu hne
+    · exact False.elim (hne hA)
+
+theorem LamConN_atom_empty {n : ℕ} {u : Finset (RawLamToken α)}
+    (hu : LamConN A n u) (hne : lamFunFinset u ≠ ∅) : lamAtomFinset u = ∅ := by
+  induction n generalizing u with
+  | zero => exact False.elim (hne hu.2)
+  | succ n ih =>
+    rcases hu with hu | ⟨hA, _, _⟩
+    · exact ih hu hne
+    · exact hA
+
+theorem LamConN_atom_con {n : ℕ} {u : Finset (RawLamToken α)}
+    (hu : LamConN A n u) (hne : lamAtomFinset u ≠ ∅) : lamAtomFinset u ∈ A.Con := by
+  induction n generalizing u with
+  | zero => exact hu.1
+  | succ n ih =>
+    rcases hu with hu | ⟨hA, _, _⟩
+    · exact ih hu hne
+    · exact False.elim (hne hA)
+
+theorem LamConN_fun_wf {n : ℕ} {u : Finset (RawLamToken α)}
+    {p : List (RawLamToken α) × List (RawLamToken α)}
+    (hu : LamConN A (n + 1) u) (hp : p ∈ lamFunFinset u) :
+    LamConN A n (listToFinset p.1) ∧ LamConN A n (listToFinset p.2) := by
+  have aux {m : ℕ} {w : Finset (RawLamToken α)}
+      (hw : LamConN A m w) (hq : p ∈ lamFunFinset w) :
+      ∃ k, k + 1 ≤ m ∧
+        LamConN A k (listToFinset p.1) ∧ LamConN A k (listToFinset p.2) := by
+    induction m generalizing w with
+    | zero =>
+      exact False.elim (by
+        have : p ∈ (∅ : Finset _) := by rw [← hw.2]; exact hq
+        exact Finset.notMem_empty p this)
+    | succ m ih =>
+      rcases hw with hw | ⟨_, hWF, _⟩
+      · rcases ih hw hq with ⟨k, hk, hk'⟩
+        exact ⟨k, Nat.le_succ_of_le hk, hk'⟩
+      · exact ⟨m, Nat.le_refl _, hWF p hq⟩
+  rcases aux hu hp with ⟨k, hk, h1, h2⟩
+  have hk' : k ≤ n := Nat.le_of_succ_le_succ hk
+  exact ⟨LamConN_mono A hk' h1, LamConN_mono A hk' h2⟩
+
+/-- FunCon from an explicit right-branch witness at stage `n+1`. -/
+theorem LamConN_fun_FunCon_right {n : ℕ} {u : Finset (RawLamToken α)}
+    (_hA : lamAtomFinset u = ∅)
+    (_hWF : ∀ p ∈ lamFunFinset u,
+      LamConN A n (listToFinset p.1) ∧ LamConN A n (listToFinset p.2))
+    (hFun : ∀ s ⊆ lamFunFinset u,
+      LamConN A n (lamInputUnion s) → LamConN A n (lamOutputUnion s))
+    {s : Finset (List (RawLamToken α) × List (RawLamToken α))}
+    (hs : s ⊆ lamFunFinset u) (hIn : LamConN A n (lamInputUnion s)) :
+    LamConN A n (lamOutputUnion s) :=
+  hFun s hs hIn
+
+/-- Membership entailment at a fixed stage (Scott (v) / ent_refl on raw tokens). -/
+theorem LamEntN_of_mem {n : ℕ} {u : Finset (RawLamToken α)} {t : RawLamToken α}
+    (hu : LamConN A n u) (ht : t ∈ u) : LamEntN A n u t := by
+  induction n generalizing u t with
+  | zero =>
+    match t with
+    | .bot => exact hu
+    | .atom x =>
+      exact ⟨hu, Finset.ne_empty_of_mem (mem_lamAtomFinset.2 ht),
+        A.ent_refl hu.1 (mem_lamAtomFinset.2 ht)⟩
+    | .funTok _ _ =>
+      exact False.elim (by
+        have hp : (_, _) ∈ lamFunFinset u := mem_lamFunFinset.2 ht
+        rw [hu.2] at hp; exact Finset.notMem_empty _ hp)
+  | succ n ih =>
+    rcases hu with hu | hRight
+    · exact Or.inl (ih hu ht)
+    · have huFull : LamConN A (n + 1) u := Or.inr hRight
+      match t with
+      | .bot => exact Or.inr huFull
+      | .atom x =>
+        exact False.elim (by
+          have : x ∈ lamAtomFinset u := mem_lamAtomFinset.2 ht
+          rw [hRight.1] at this; exact Finset.notMem_empty x this)
+      | .funTok xs ys =>
+        have hmem : (xs, ys) ∈ lamFunFinset u := mem_lamFunFinset.2 ht
+        have hWF := LamConN_fun_wf A huFull hmem
+        refine Or.inr ⟨huFull, hRight.1, hWF.1, hWF.2, ⟨{(xs, ys)}, ?_, ?_, ?_⟩⟩
+        · intro p hp
+          have : p = (xs, ys) := Finset.mem_singleton.mp hp
+          subst this
+          exact hmem
+        · intro p hp t ht'
+          have : p = (xs, ys) := Finset.mem_singleton.mp hp
+          subst this
+          exact ih hWF.1 ht'
+        · intro t ht'
+          rw [lamOutputUnion_singleton (xs, ys)]
+          exact ih hWF.2 ht'
+
+theorem LamEnt_of_mem {u : Finset (RawLamToken α)} {t : RawLamToken α}
+    (hu : LamCon A u) (ht : t ∈ u) : LamEnt A u t := by
+  rcases hu with ⟨n, hu⟩
+  exact ⟨n, LamEntN_of_mem A hu ht⟩
+
 /-- Bundled entailment on `LamToken`. -/
 def LamTokenEnt (u : Finset (LamToken A)) (p : LamToken A) : Prop :=
   LamEnt A (lamForgetFinset A u) p.val
@@ -579,14 +784,141 @@ theorem LamTokenEnt_bot {u : Finset (LamToken A)} (hu : LamTokenCon A u) :
     LamTokenEnt A u (lamBot A) :=
   LamEnt_bot A hu
 
-/-- Consistency and bottom-entailment fragments of Def 2.1 for the λ-model. -/
+theorem LamTokenEnt_of_mem {u : Finset (LamToken A)} {p : LamToken A}
+    (hu : LamTokenCon A u) (hp : p ∈ u) : LamTokenEnt A u p :=
+  LamEnt_of_mem A hu ((mem_lamForgetFinset A).2 ⟨p, hp, rfl⟩)
+
+/-! ## ent_con: inserting an entailed token preserves consistency -/
+
+theorem lamInputUnion_insert
+    (s : Finset (List (RawLamToken α) × List (RawLamToken α)))
+    (p : List (RawLamToken α) × List (RawLamToken α)) :
+    lamInputUnion (insert p s) = listToFinset p.1 ∪' lamInputUnion s := by
+  ext t
+  constructor
+  · intro ht
+    rcases (mem_lamInputUnion).1 ht with ⟨q, hq, ht'⟩
+    rcases Finset.mem_insert.mp hq with rfl | hq
+    · exact mem_funion.2 (Or.inl ht')
+    · exact mem_funion.2 (Or.inr ((mem_lamInputUnion).2 ⟨q, hq, ht'⟩))
+  · intro ht
+    rcases mem_funion.1 ht with ht | ht
+    · exact (mem_lamInputUnion).2 ⟨p, Finset.mem_insert_self p s, ht⟩
+    · rcases (mem_lamInputUnion).1 ht with ⟨q, hq, ht'⟩
+      exact (mem_lamInputUnion).2 ⟨q, Finset.mem_insert_of_mem hq, ht'⟩
+
+theorem lamOutputUnion_insert
+    (s : Finset (List (RawLamToken α) × List (RawLamToken α)))
+    (p : List (RawLamToken α) × List (RawLamToken α)) :
+    lamOutputUnion (insert p s) = listToFinset p.2 ∪' lamOutputUnion s := by
+  ext t
+  constructor
+  · intro ht
+    rcases (mem_lamOutputUnion).1 ht with ⟨q, hq, ht'⟩
+    rcases Finset.mem_insert.mp hq with rfl | hq
+    · exact mem_funion.2 (Or.inl ht')
+    · exact mem_funion.2 (Or.inr ((mem_lamOutputUnion).2 ⟨q, hq, ht'⟩))
+  · intro ht
+    rcases mem_funion.1 ht with ht | ht
+    · exact (mem_lamOutputUnion).2 ⟨p, Finset.mem_insert_self p s, ht⟩
+    · rcases (mem_lamOutputUnion).1 ht with ⟨q, hq, ht'⟩
+      exact (mem_lamOutputUnion).2 ⟨q, Finset.mem_insert_of_mem hq, ht'⟩
+
+theorem lamInputUnion_funion
+    (s t : Finset (List (RawLamToken α) × List (RawLamToken α))) :
+    lamInputUnion (s ∪' t) = lamInputUnion s ∪' lamInputUnion t := by
+  ext x
+  constructor
+  · intro hx
+    rcases (mem_lamInputUnion).1 hx with ⟨p, hp, hx'⟩
+    rcases mem_funion.1 hp with hp | hp
+    · exact mem_funion.2 (Or.inl ((mem_lamInputUnion).2 ⟨p, hp, hx'⟩))
+    · exact mem_funion.2 (Or.inr ((mem_lamInputUnion).2 ⟨p, hp, hx'⟩))
+  · intro hx
+    rcases mem_funion.1 hx with hx | hx
+    · rcases (mem_lamInputUnion).1 hx with ⟨p, hp, hx'⟩
+      exact (mem_lamInputUnion).2 ⟨p, mem_funion.2 (Or.inl hp), hx'⟩
+    · rcases (mem_lamInputUnion).1 hx with ⟨p, hp, hx'⟩
+      exact (mem_lamInputUnion).2 ⟨p, mem_funion.2 (Or.inr hp), hx'⟩
+
+theorem lamOutputUnion_funion
+    (s t : Finset (List (RawLamToken α) × List (RawLamToken α))) :
+    lamOutputUnion (s ∪' t) = lamOutputUnion s ∪' lamOutputUnion t := by
+  ext x
+  constructor
+  · intro hx
+    rcases (mem_lamOutputUnion).1 hx with ⟨p, hp, hx'⟩
+    rcases mem_funion.1 hp with hp | hp
+    · exact mem_funion.2 (Or.inl ((mem_lamOutputUnion).2 ⟨p, hp, hx'⟩))
+    · exact mem_funion.2 (Or.inr ((mem_lamOutputUnion).2 ⟨p, hp, hx'⟩))
+  · intro hx
+    rcases mem_funion.1 hx with hx | hx
+    · rcases (mem_lamOutputUnion).1 hx with ⟨p, hp, hx'⟩
+      exact (mem_lamOutputUnion).2 ⟨p, mem_funion.2 (Or.inl hp), hx'⟩
+    · rcases (mem_lamOutputUnion).1 hx with ⟨p, hp, hx'⟩
+      exact (mem_lamOutputUnion).2 ⟨p, mem_funion.2 (Or.inr hp), hx'⟩
+
+theorem LamConN_insert_bot {n : ℕ} {u : Finset (RawLamToken α)}
+    (hu : LamConN A n u) : LamConN A n (insert (.bot : RawLamToken α) u) := by
+  induction n generalizing u with
+  | zero =>
+    exact ⟨by rw [lamAtomFinset_insert_bot]; exact hu.1,
+      by rw [lamFunFinset_insert_bot]; exact hu.2⟩
+  | succ n ih =>
+    rcases hu with hu | ⟨hA, hWF, hFun⟩
+    · exact Or.inl (ih hu)
+    · exact Or.inr ⟨by rw [lamAtomFinset_insert_bot]; exact hA,
+        fun p hp => hWF p (by rwa [lamFunFinset_insert_bot] at hp),
+        fun s hs hIn =>
+          hFun s (fun p hp => by rw [← lamFunFinset_insert_bot u]; exact hs hp) hIn⟩
+
+/-- Inserting an entailed bot or atom preserves stage-`n` consistency.
+Function-token `ent_con` (FunCon on `insert`) remains. -/
+theorem LamConN_insert_of_ent_atom {n : ℕ} {u : Finset (RawLamToken α)} {x : α}
+    (ht : LamEntN A n u (.atom x)) : LamConN A n (insert (.atom x) u) := by
+  induction n generalizing u with
+  | zero =>
+    rcases ht with ⟨⟨_, hF⟩, _, hEnt⟩
+    exact ⟨by rw [lamAtomFinset_insert_atom]; exact A.ent_con hEnt,
+      by rw [lamFunFinset_insert_atom]; exact hF⟩
+  | succ n ih =>
+    rcases ht with ht | ⟨_, hF, _, hEnt⟩
+    · exact Or.inl (ih ht)
+    · exact LamConN_mono A (Nat.zero_le (n + 1))
+        ⟨by rw [lamAtomFinset_insert_atom]; exact A.ent_con hEnt,
+          by rw [lamFunFinset_insert_atom]; exact hF⟩
+
+theorem LamConN_insert_of_ent_bot {n : ℕ} {u : Finset (RawLamToken α)}
+    (ht : LamEntN A n u .bot) : LamConN A n (insert (.bot : RawLamToken α) u) :=
+  LamConN_insert_bot A (LamEntN_con A ht)
+
+theorem lamForgetFinset_insert (u : Finset (LamToken A)) (p : LamToken A) :
+    lamForgetFinset A (insert p u) = insert p.val (lamForgetFinset A u) := by
+  ext t
+  constructor
+  · intro ht
+    rcases (mem_lamForgetFinset A).1 ht with ⟨q, hq, rfl⟩
+    rcases Finset.mem_insert.mp hq with rfl | hq
+    · exact Finset.mem_insert_self _ _
+    · exact Finset.mem_insert_of_mem ((mem_lamForgetFinset A).2 ⟨q, hq, rfl⟩)
+  · intro ht
+    rcases Finset.mem_insert.mp ht with rfl | ht
+    · exact (mem_lamForgetFinset A).2 ⟨p, Finset.mem_insert_self p u, rfl⟩
+    · rcases (mem_lamForgetFinset A).1 ht with ⟨q, hq, rfl⟩
+      exact (mem_lamForgetFinset A).2 ⟨q, Finset.mem_insert_of_mem hq, rfl⟩
+
+/-- Def 2.1 progress: `con_subset`, `con_sing`, `ent_bot`, `ent_refl`;
+`ent_con` for bot/atom; `ent_con`/`ent_trans` on `funTok` remain. -/
 theorem lambdaSystem_con_axioms :
     (∀ {u v : Finset (LamToken A)}, LamTokenCon A u → v ⊆ u → LamTokenCon A v) ∧
       (∀ p : LamToken A, LamTokenCon A {p}) ∧
-        (∀ {u : Finset (LamToken A)}, LamTokenCon A u → LamTokenEnt A u (lamBot A)) :=
+        (∀ {u : Finset (LamToken A)}, LamTokenCon A u → LamTokenEnt A u (lamBot A)) ∧
+          (∀ {u : Finset (LamToken A)} {p : LamToken A},
+            LamTokenCon A u → p ∈ u → LamTokenEnt A u p) :=
   ⟨fun hu hv => LamTokenCon_subset A hu hv,
     LamTokenCon_singleton A,
-    fun hu => LamTokenEnt_bot A hu⟩
+    fun hu => LamTokenEnt_bot A hu,
+    fun hu hp => LamTokenEnt_of_mem A hu hp⟩
 
 end InfoSys
 
