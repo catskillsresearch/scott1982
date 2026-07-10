@@ -534,7 +534,7 @@ flowchart TD
   P74["Proposition 7.4<br/><i>Proposition74.lean</i>"]
   F75["Factoid 7.5<br/><i>Factoid75.lean</i>"]
   F76["Factoid 7.6<br/><i>Factoid76.lean</i>"]
-  F77["Factoid 7.7<br/><i>Factoid77.lean — CCC stretch</i>"]
+  F77["Factoid 7.7<br/><i>Factoid77.lean — CCC Partial</i>"]
   CT["Mathlib CategoryTheory<br/><i>stretch dependency</i>"]
   C --> D71
   P23 --> D71
@@ -558,7 +558,8 @@ flowchart TD
 `Proposition23` only. Theorem 7.2 needs approximable maps plus the product/pairing
 apparatus for `apply` / `curry`. Theorem 7.3 (`fix`) sits on the function space and
 approximable maps; Factoid 7.6 reuses `const` and `pair` as operators. Factoid 7.7
-packages Scott’s CCC remark as a stretch goal using `Mathlib.CategoryTheory`.
+packages Scott’s CCC remark via Mathlib `Category` / `CartesianMonoidalCategory` plus
+the exponential `Equiv` (full `MonoidalClosed` still open).
 
 #### Definition 7.1
 * **Mathematical Target:** Function-space information system `A → B` with Scott's `Con`/`⊢` on pairs of consistent sets.
@@ -613,9 +614,12 @@ packages Scott’s CCC remark as a stretch goal using `Mathlib.CategoryTheory`.
   (with unit `1` from Factoid 6.5) show the category of information systems and approximable
   maps is cartesian closed.
 * **Lean File:** `Scott1982/Factoid77.lean`
-* **Proof Notes:** **Not Yet (stretch)** — after Theorem 7.2, package the concrete UP data as a
-  `Mathlib.CategoryTheory` `CartesianClosed` (or equivalent) instance. Intentionally uses
-  Lean’s category-theory library; not required for the constructive core.
+* **Proof Notes:** **Partial (stretch)** — bundled `InfoSysObj`; Mathlib `Category` and
+  `CartesianMonoidalCategory` (terminal `1`, binary products from Prop 6.2); exponential UP as
+  `tensorExpEquiv : (A ⊗ Y ⟶ Z) ≃ (Y ⟶ A → Z)` via Scott curry after product symmetry.
+  Full `MonoidalClosed` instance deferred (needs left-naturality of `uncurryRight`).
+  Category axioms ⊆ `{propext, Quot.sound}`; product/equiv packaging pulls `Classical.choice`
+  via Mathlib `ofChosenFiniteProducts`. No `sorry`.
 
 ---
 
