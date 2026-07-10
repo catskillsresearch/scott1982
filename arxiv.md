@@ -469,8 +469,8 @@ flowchart TD
 
 `Product.lean` (Def 6.1 / `productSystem`) imports `Constructive` and `Proposition23`.
 `Proposition62.lean` adds approximable `fst`/`snd`/`⟨f,g⟩` on top of `Approximable` /
-Prop 5.3–5.5. Sum is parallel (`Sum.lean`); Factoid 6.5 (unit domain) sits above both
-universal properties.
+Prop 5.3–5.5. `Sum.lean` (Def 6.3 / `sumSystem`) is parallel to `Product.lean`; Prop 6.4
+will add injections/copairing. Factoid 6.5 (unit domain) sits above both universal properties.
 
 #### Definition 6.1
 * **Mathematical Target:** Product information system `A × B` on tagged tokens.
@@ -489,7 +489,9 @@ universal properties.
 #### Definition 6.3
 * **Mathematical Target:** Separated sum `A + B`.
 * **Lean File:** `Scott1982/Sum.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `SumToken` (`left` / `right` / `bot`); `sumBot`; `lftFinset` /
+  `rhtFinset`; `SumCon` / `SumEnt`; `sumSystem : InfoSys _` with all six Def 2.1 axioms.
+  Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Proposition 6.4
 * **Mathematical Target:** Sum is an information system; injections and copairing.

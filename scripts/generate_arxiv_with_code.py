@@ -59,7 +59,7 @@ FILE_ROLES: dict[str, str] = {
     "Scott1982/Proposition56.lean": "constant maps",
     "Scott1982/Product.lean": "Def 6.1 productSystem",
     "Scott1982/Proposition62.lean": "Prop 6.2 fst/snd/pair",
-    "Scott1982/Sum.lean": "Def 6.3 / Prop 6.4 (skeleton)",
+    "Scott1982/Sum.lean": "Def 6.3 sumSystem",
     "Scott1982/FunctionSpace.lean": "Def 7.1 / Thm 7.2 (skeleton)",
     "Scott1982/Fixpoint.lean": "Thm 7.3 / Prop 7.4 (skeleton)",
     "Scott1982/DomainEquation.lean": "§8 domain equations (skeleton)",
