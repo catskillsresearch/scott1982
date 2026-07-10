@@ -578,8 +578,10 @@ packages Scott’s CCC remark as a stretch goal using `Mathlib.CategoryTheory`.
 
 #### Theorem 7.3
 * **Mathematical Target:** Least fixed-point operator `fix : (A → A) → A`.
-* **Lean File:** `Scott1982/Fixpoint.lean` / `Theorem73.lean`
-* **Proof Notes:** **Not Yet** — adapt PRG-19 `fixMap` / `iterMap` patterns (copied/adapted into this repo).
+* **Lean File:** `Scott1982/Fixpoint.lean`
+* **Proof Notes:** **Pass** — `FixChain` / `FixReach`; approximable `fixMap`;
+  `fixElement` with `f(fix f) = fix f`, least among pre-fixed points, and operator
+  uniqueness. Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Proposition 7.4
 * **Mathematical Target:** Plotkin-style equational characterization of `fix`.
