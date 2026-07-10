@@ -221,6 +221,38 @@ theorem sndFinset_singleton_right (p : ProdToken A B) (hp : p.val.1 = A.bot) :
     sndFinset_empty]
   rfl
 
+theorem fstFinset_funion (u v : Finset (ProdToken A B)) :
+    fstFinset A B (u ∪' v) = fstFinset A B u ∪' fstFinset A B v := by
+  ext x
+  constructor
+  · intro hx
+    rcases (mem_fstFinset A B).1 hx with ⟨p, hp, hbot, hx'⟩
+    rcases mem_funion.mp hp with hp | hp
+    · exact mem_funion.mpr (Or.inl ((mem_fstFinset A B).2 ⟨p, hp, hbot, hx'⟩))
+    · exact mem_funion.mpr (Or.inr ((mem_fstFinset A B).2 ⟨p, hp, hbot, hx'⟩))
+  · intro hx
+    rcases mem_funion.mp hx with hx | hx
+    · rcases (mem_fstFinset A B).1 hx with ⟨p, hp, hbot, hx'⟩
+      exact (mem_fstFinset A B).2 ⟨p, mem_funion.mpr (Or.inl hp), hbot, hx'⟩
+    · rcases (mem_fstFinset A B).1 hx with ⟨p, hp, hbot, hx'⟩
+      exact (mem_fstFinset A B).2 ⟨p, mem_funion.mpr (Or.inr hp), hbot, hx'⟩
+
+theorem sndFinset_funion (u v : Finset (ProdToken A B)) :
+    sndFinset A B (u ∪' v) = sndFinset A B u ∪' sndFinset A B v := by
+  ext y
+  constructor
+  · intro hy
+    rcases (mem_sndFinset A B).1 hy with ⟨p, hp, hbot, hy'⟩
+    rcases mem_funion.mp hp with hp | hp
+    · exact mem_funion.mpr (Or.inl ((mem_sndFinset A B).2 ⟨p, hp, hbot, hy'⟩))
+    · exact mem_funion.mpr (Or.inr ((mem_sndFinset A B).2 ⟨p, hp, hbot, hy'⟩))
+  · intro hy
+    rcases mem_funion.mp hy with hy | hy
+    · rcases (mem_sndFinset A B).1 hy with ⟨p, hp, hbot, hy'⟩
+      exact (mem_sndFinset A B).2 ⟨p, mem_funion.mpr (Or.inl hp), hbot, hy'⟩
+    · rcases (mem_sndFinset A B).1 hy with ⟨p, hp, hbot, hy'⟩
+      exact (mem_sndFinset A B).2 ⟨p, mem_funion.mpr (Or.inr hp), hbot, hy'⟩
+
 /-- Consistency for the product system (Scott 6.1(iii)). -/
 def ProdCon (u : Finset (ProdToken A B)) : Prop :=
   fstFinset A B u ∈ A.Con ∧ sndFinset A B u ∈ B.Con

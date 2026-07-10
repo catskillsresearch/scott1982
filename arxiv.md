@@ -81,7 +81,7 @@ flowchart TD
   F4["Factoid4*.lean<br/>meets, directed lubs, …"]
   Ap["Approximable.lean<br/>Def 5.1–5.2"]
   P5["Proposition5*.lean"]
-  Pr["Product.lean<br/>Def 6.1, Prop 6.2"]
+  Pr["Product.lean / Proposition62.lean<br/>Def 6.1, Prop 6.2"]
   Su["Sum.lean<br/>Def 6.3, Prop 6.4"]
   FS["FunctionSpace.lean<br/>Def 7.1, Thm 7.2"]
   Fx["Fixpoint.lean<br/>Thm 7.3, Prop 7.4"]
@@ -451,7 +451,7 @@ flowchart TD
   P23["Proposition 2.3<br/><i>Proposition23.lean</i>"]
   Ap["Approximable.lean<br/><i>§5 maps</i>"]
   D61["Definition 6.1<br/><i>Product.lean</i>"]
-  P62["Proposition 6.2<br/><i>Product.lean</i>"]
+  P62["Proposition 6.2<br/><i>Proposition62.lean</i>"]
   D63["Definition 6.3<br/><i>Sum.lean</i>"]
   P64["Proposition 6.4<br/><i>Sum.lean</i>"]
   F65["Factoid 6.5<br/><i>Factoid65.lean</i>"]
@@ -468,8 +468,9 @@ flowchart TD
 ```
 
 `Product.lean` (Def 6.1 / `productSystem`) imports `Constructive` and `Proposition23`.
-Prop 6.2’s approximable `fst`/`snd`/`⟨f,g⟩` will need `Approximable`. Sum is parallel
-(`Sum.lean`); Factoid 6.5 (unit domain) sits above both universal properties.
+`Proposition62.lean` adds approximable `fst`/`snd`/`⟨f,g⟩` on top of `Approximable` /
+Prop 5.3–5.5. Sum is parallel (`Sum.lean`); Factoid 6.5 (unit domain) sits above both
+universal properties.
 
 #### Definition 6.1
 * **Mathematical Target:** Product information system `A × B` on tagged tokens.
@@ -480,8 +481,10 @@ Prop 6.2’s approximable `fst`/`snd`/`⟨f,g⟩` will need `Approximable`. Sum 
 #### Proposition 6.2
 * **Mathematical Target:** Approximable `fst`, `snd`, pairing `⟨f,g⟩` with universal property
   (`A × B` as an `InfoSys` is already Def 6.1 / `productSystem`).
-* **Lean File:** `Scott1982/Product.lean` / `Proposition62.lean`
-* **Proof Notes:** **Not Yet**
+* **Lean File:** `Scott1982/Proposition62.lean`
+* **Proof Notes:** **Pass** — `fstMap` / `sndMap` / `pairMap`; `comp_fstMap_pairMap` /
+  `comp_sndMap_pairMap`; uniqueness via `element_eq_of_fst_snd` + Prop 5.3 extensionality.
+  Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Definition 6.3
 * **Mathematical Target:** Separated sum `A + B`.

@@ -17,6 +17,7 @@ import Scott1982.Proposition54
 import Scott1982.Proposition55
 import Scott1982.Proposition56
 import Scott1982.Product
+import Scott1982.Proposition62
 import Scott1982.Sum
 import Scott1982.FunctionSpace
 import Scott1982.Fixpoint
