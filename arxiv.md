@@ -192,7 +192,9 @@ flowchart TD
 * **Mathematical Target:** First example: `D = ℕ`, `Δ = 0`, all finite sets consistent,
   `{nᵢ} ⊢ m` iff `m = 0 ∨ ∃ i, m ≤ nᵢ`.
 * **Lean File:** `Scott1982/Factoid24.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `example : InfoSys ℕ` with `lowerBoundEnt`; axioms (i)–(iii)
+  trivial (`Con = univ`); (iv) `0`-bot; (v) reflexivity via `le_rfl`; (vi) cut by chaining
+  `≤` through the witness in `u`. Imports only `InfoSys` (Def 2.1 apparatus). No `sorry`.
 
 #### Factoid 2.5
 * **Mathematical Target:** Second example: open intervals `(n, m)` with `n < m`, plus `(0, ∞)`.
@@ -527,6 +529,7 @@ builds `arxiv_with_code.md` from this file plus the Lean source.
 | `Scott1982/InfoSys.lean` | Def 2.1 + Def 3.1 (`Element`) |
 | `Scott1982/Definition22.lean` | Def 2.2 `EntSet` |
 | `Scott1982/Proposition23.lean` | Prop 2.3 |
+| `Scott1982/Factoid24.lean` | Factoid 2.4 ℕ lower-bound example |
 | `Scott1982/Factoid32.lean` | Δ ∈ every element |
 | `Scott1982/Factoid33.lean` | ⊥ least |
 | `Scott1982/Factoid35.lean` | finite closure `ū` |
