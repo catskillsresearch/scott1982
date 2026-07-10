@@ -8,8 +8,10 @@ In 1982 Dana Scott published *Domains for Denotational Semantics* (ICALP, LNCS 1
 presenting domains via **information systems**: finite consistency and entailment on data
 objects (tokens), with domain elements recovered as consistent, deductively closed sets.
 This is the third of Scott's major presentations of domain theory—after continuous lattices
-(1972) and neighbourhood systems (PRG-19, 1981)—and is the most explicitly constructive of
-the three.
+**[Sco72]** and neighbourhood systems (PRG-19, **[Sco81]**) — and is the most explicitly
+constructive of the three. Companion Lean formalizations of those earlier presentations are
+[`scott1972`](https://github.com/catskillsresearch/scott1972) **[SR72]** and
+[`scott1980`](https://github.com/catskillsresearch/scott1980) **[ER80]**.
 
 This Lean 4 formalization targets the **entire paper** (Sections 1–8). We strive to avoid
 the law of excluded middle. Every completed module is audited with `#print axioms`; the
@@ -129,9 +131,12 @@ Avoid mathlib `(· ∪ ·)`, `Finset.image`, `tauto`, `aesop` unless audited.
 
 ### Portable prior work
 
-Where Scott 1972 / PRG-19 (scott1980) developed the *same* mathematics in a portable form,
-we **copy** the Lean into this repo (adapted to `InfoSys` / `Finset` as needed) rather than
-depending on sibling packages. Cross-presentation equivalence theorems remain in `scott_models`.
+Where Scott 1972 **[Sco72]** /
+[`scott1972`](https://github.com/catskillsresearch/scott1972) **[SR72]** and PRG-19 **[Sco81]** /
+[`scott1980`](https://github.com/catskillsresearch/scott1980) **[ER80]** developed the *same*
+mathematics in a portable form, we **copy** the Lean into this repo (adapted to `InfoSys` /
+`Finset` as needed) rather than depending on sibling packages. Cross-presentation equivalence
+theorems remain in `scott_models`.
 
 ### Status vocabulary
 
@@ -500,41 +505,27 @@ lake build Scott1982
 
 Pinned: Lean / mathlib **v4.30.0**.
 
----
-
-## Acknowledgments
-
-- **Dana Scott** — *Domains for Denotational Semantics* **[Sco82]**, the paper this development
-  formalizes.
-
-### AI-assisted development
-
-The human author retains sole responsibility for the mathematical content, the choice of
-formalization route, and every formal claim in this work. Following standard publisher practice
-(e.g., COPE guidance on authorship and AI tools **[COPE24]**), **no large language model is listed
-as a co-author** — authorship implies an accountability that automated systems cannot bear.
-
-Because this development may borrow Lean and proof patterns from the sibling formalizations
-`scott1972` and `scott1980`, **every model in the registry is treated as used** for
-acknowledgement purposes. We gratefully acknowledge assistance from the following tools
-(auto-generated from `scripts/ai_model_cards.py` when building `arxiv.tex`):
-
-<!-- AI_MODEL_TOOL_BULLETS -->
-<!-- /AI_MODEL_TOOL_BULLETS -->
-
-All definitions, constructivity audits, and final prose were reviewed by the human author, who takes
-full responsibility for them.
-
-### Artifact availability
-
-The development is at
-[`github.com/catskillsresearch/scott1982`](https://github.com/catskillsresearch/scott1982).
-Run `lake build Scott1982` for the formalization; `scripts/generate_arxiv_with_code.sh`
-builds `arxiv_with_code.md` from this file plus the Lean source.
+Acknowledgments (Dana Scott **[Sco82]**, AI tool cards, artifact URL) are injected before
+References when building `arxiv.tex` via `scripts/ai_model_cards.py` — they are not kept in
+this file.
 
 ---
 
-## Appendix — Lean source index
+## References
+
+- **[Sco82]** D. Scott. *Domains for Denotational Semantics*. ICALP 1982, LNCS 140, pp. 577–613.
+- **[Sco81]** D. Scott. *Lectures on a Mathematical Theory of Computation*. PRG-19, Oxford, 1981.
+- **[Sco72]** D. Scott. *Continuous Lattices*. LNM 274, 1972.
+- **[SR72]** Catskills Research. *scott1972*. <https://github.com/catskillsresearch/scott1972>.
+- **[ER80]** Catskills Research. *scott1980*. <https://github.com/catskillsresearch/scott1980>.
+- **[Win93]** G. Winskel. *The Formal Semantics of Programming Languages*. MIT Press, 1993.
+- **[COPE24]** Committee on Publication Ethics (COPE). *Authorship and AI tools: COPE position statement*. 2024. <https://publicationethics.org/guidance/cope-position/authorship-and-ai-tools>
+<!-- AI_MODEL_REFERENCES -->
+<!-- /AI_MODEL_REFERENCES -->
+
+---
+
+## Lean source index
 
 | File | Role |
 | --- | --- |
@@ -555,15 +546,3 @@ builds `arxiv_with_code.md` from this file plus the Lean source.
 | *(further files as inventory lands)* | |
 
 Vision transcript: `sources/Domains_for_Denotational_Semantics.md`.
-
----
-
-## References
-
-- **[Sco82]** D. Scott. *Domains for Denotational Semantics*. ICALP 1982, LNCS 140, pp. 577–613.
-- **[Sco81]** D. Scott. *Lectures on a Mathematical Theory of Computation*. PRG-19, Oxford, 1981.
-- **[Sco72]** D. Scott. *Continuous Lattices*. LNM 274, 1972.
-- **[Win93]** G. Winskel. *The Formal Semantics of Programming Languages*. MIT Press, 1993.
-- **[COPE24]** Committee on Publication Ethics (COPE). *Authorship and AI tools: COPE position statement*. 2024. <https://publicationethics.org/guidance/cope-position/authorship-and-ai-tools>
-<!-- AI_MODEL_REFERENCES -->
-<!-- /AI_MODEL_REFERENCES -->

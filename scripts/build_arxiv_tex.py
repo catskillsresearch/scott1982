@@ -10,7 +10,8 @@ Pipeline:
      the numbering and we never get duplicates like "5.1 5.1".
   5. Replace fenced code with \\lstinputlisting blocks (ASCII-sanitized for arXiv pdfLaTeX).
   5b. Render ```mermaid blocks to vector PDFs via mermaid-cli (mmdc).
-  6. Inject AI model-card acknowledgements from `scripts/ai_model_cards.py` (before HTML-comment strip).
+  6. Inject Acknowledgments (Dana Scott + AI model cards) from `scripts/ai_model_cards.py`
+     before the HTML-comment strip; Acknowledgments are not kept in `arxiv.md`.
   7. pandoc → LaTeX, then splice the listing/math/figure placeholders back in.
 """
 
@@ -283,7 +284,12 @@ def cleanup_pandoc_latex(latex: str) -> str:
         )
     latex = re.sub(
         r"\\section\{Appendix A\. Lean source index\}",
-        "",
+        r"\\section{Lean source index}",
+        latex,
+    )
+    latex = re.sub(
+        r"\\section\{Appendix — Lean source index\}",
+        r"\\section{Lean source index}",
         latex,
     )
     latex = re.sub(
@@ -296,10 +302,13 @@ def cleanup_pandoc_latex(latex: str) -> str:
 
 
 def insert_appendix_command(latex: str) -> str:
-    marker = r"\section{Complete Lean source}"
-    if marker not in latex:
-        raise RuntimeError(f"missing {marker!r} in LaTeX output")
-    return latex.replace(marker, r"\appendix" + "\n" + marker, 1)
+    # Prefer the short Lean source index (after References); fall back to full source dump.
+    for marker in (r"\section{Lean source index}", r"\section{Complete Lean source}"):
+        if marker in latex:
+            return latex.replace(marker, r"\appendix" + "\n" + marker, 1)
+    raise RuntimeError(
+        "missing \\section{Lean source index} or \\section{Complete Lean source} in LaTeX output"
+    )
 
 
 def cleanup_abstract_latex(latex: str) -> str:

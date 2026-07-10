@@ -12,6 +12,7 @@ particular scott1982 session.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 
@@ -121,6 +122,41 @@ TOOL_BULLETS_END = "<!-- /AI_MODEL_TOOL_BULLETS -->"
 REFERENCES_BEGIN = "<!-- AI_MODEL_REFERENCES -->"
 REFERENCES_END = "<!-- /AI_MODEL_REFERENCES -->"
 
+# Acknowledgments live outside `arxiv.md` and are spliced in when building `arxiv.tex`.
+ACKNOWLEDGMENTS_MARKDOWN = """## Acknowledgments
+
+- **Dana Scott** — *Domains for Denotational Semantics* **[Sco82]**, the paper this development
+  formalizes.
+
+### AI-assisted development
+
+The human author retains sole responsibility for the mathematical content, the choice of
+formalization route, and every formal claim in this work. Following standard publisher practice
+(e.g., COPE guidance on authorship and AI tools **[COPE24]**), **no large language model is listed
+as a co-author** — authorship implies an accountability that automated systems cannot bear.
+
+Because this development may borrow Lean and proof patterns from the sibling formalizations
+[`scott1972`](https://github.com/catskillsresearch/scott1972) **[SR72]** and
+[`scott1980`](https://github.com/catskillsresearch/scott1980) **[ER80]**, **every model in the
+registry is treated as used** for acknowledgement purposes. We gratefully acknowledge assistance
+from the following tools (auto-generated from `scripts/ai_model_cards.py` when building
+`arxiv.tex`):
+
+<!-- AI_MODEL_TOOL_BULLETS -->
+<!-- /AI_MODEL_TOOL_BULLETS -->
+
+All definitions, constructivity audits, and final prose were reviewed by the human author, who takes
+full responsibility for them.
+
+### Artifact availability
+
+The development is at
+[`github.com/catskillsresearch/scott1982`](https://github.com/catskillsresearch/scott1982).
+Run `lake build Scott1982` for the formalization; `scripts/generate_arxiv_with_code.sh`
+builds `arxiv_with_code.md` from this file plus the Lean source.
+
+"""
+
 
 def render_tool_bullets() -> str:
     return "\n".join(
@@ -132,11 +168,24 @@ def render_model_references() -> str:
     return "\n".join(f"- **[{card.cite_key}]** {card.reference}" for card in MODEL_CARDS)
 
 
+def inject_acknowledgments(text: str) -> str:
+    """Insert the Acknowledgments section before References (skipped if already present)."""
+    if re.search(r"^##\s+Acknowledgments\s*$", text, re.MULTILINE):
+        return text
+    m = re.search(r"^##\s+References\s*$", text, re.MULTILINE)
+    if not m:
+        raise RuntimeError(
+            "missing ## References in narrative; needed to place Acknowledgments before it"
+        )
+    return text[: m.start()] + ACKNOWLEDGMENTS_MARKDOWN + "\n" + text[m.start() :]
+
+
 def inject_model_cards(text: str) -> str:
-    """Expand acknowledgement markers; pass through unchanged if markers absent."""
+    """Insert Acknowledgments (if needed), then expand AI model-card markers."""
+    text = inject_acknowledgments(text)
     if TOOL_BULLETS_BEGIN not in text:
         raise RuntimeError(
-            f"missing {TOOL_BULLETS_BEGIN} in narrative; add markers to arxiv.md Acknowledgments"
+            f"missing {TOOL_BULLETS_BEGIN} after Acknowledgments injection"
         )
     if REFERENCES_BEGIN not in text:
         raise RuntimeError(

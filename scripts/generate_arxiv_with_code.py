@@ -11,35 +11,51 @@ ROOT = Path(__file__).resolve().parent.parent
 # Library files in dependency order (matches Scott1982.lean import order).
 FILES = [
     "Scott1982.lean",
-    "Scott1982/InfoSys/Injective.lean",
-    "Scott1982/InfoSys/WayBelow.lean",
-    "Scott1982/InfoSys/Specialization.lean",
-    "Scott1982/InfoSys/ScottMaps.lean",
-    "Scott1982/InfoSys/MilnerCorrection.lean",
-    "Scott1982/InfoSys/Constructions.lean",
-    "Scott1982/InfoSys/FunctionSpaces.lean",
-    "Scott1982/InfoSys/Theorem212.lean",
-    "Scott1982/InfoSys/InverseLimits.lean",
-    "Scott1982/InfoSys/FunctionSpaceTower.lean",
+    "Scott1982/Constructive.lean",
+    "Scott1982/InfoSys.lean",
+    "Scott1982/Definition22.lean",
+    "Scott1982/Proposition23.lean",
+    "Scott1982/Factoid24.lean",
+    "Scott1982/Factoid25.lean",
+    "Scott1982/Factoid26.lean",
+    "Scott1982/Factoid32.lean",
+    "Scott1982/Factoid33.lean",
+    "Scott1982/Factoid35.lean",
+    "Scott1982/Approximable.lean",
+    "Scott1982/Proposition54.lean",
+    "Scott1982/Proposition55.lean",
+    "Scott1982/Product.lean",
+    "Scott1982/Sum.lean",
+    "Scott1982/FunctionSpace.lean",
+    "Scott1982/Fixpoint.lean",
+    "Scott1982/DomainEquation.lean",
 ]
 
 FILE_ROLES: dict[str, str] = {
     "Scott1982.lean": "Root import graph",
-    "Scott1982/InfoSys/Injective.lean": "Scott §1",
-    "Scott1982/InfoSys/WayBelow.lean": "Scott §2",
-    "Scott1982/InfoSys/Specialization.lean": "Scott §2",
-    "Scott1982/InfoSys/ScottMaps.lean": "Scott §2",
-    "Scott1982/InfoSys/MilnerCorrection.lean": "March 1972 correction",
-    "Scott1982/InfoSys/Constructions.lean": "Scott §2.8–2.12",
-    "Scott1982/InfoSys/FunctionSpaces.lean": "Scott §3",
-    "Scott1982/InfoSys/Theorem212.lean": "Theorem 2.12",
-    "Scott1982/InfoSys/InverseLimits.lean": "Scott §4",
-    "Scott1982/InfoSys/FunctionSpaceTower.lean": "Theorem 4.4",
+    "Scott1982/Constructive.lean": "Choice-free Finset prelude",
+    "Scott1982/InfoSys.lean": "Def 2.1 + Def 3.1 (Element)",
+    "Scott1982/Definition22.lean": "Def 2.2 EntSet",
+    "Scott1982/Proposition23.lean": "Prop 2.3",
+    "Scott1982/Factoid24.lean": "Factoid 2.4 ℕ lower-bound example",
+    "Scott1982/Factoid25.lean": "Factoid 2.5 interval example",
+    "Scott1982/Factoid26.lean": "Factoid 2.6 partial-function example",
+    "Scott1982/Factoid32.lean": "Δ ∈ every element",
+    "Scott1982/Factoid33.lean": "⊥ least",
+    "Scott1982/Factoid35.lean": "finite closure ū",
+    "Scott1982/Approximable.lean": "Def 5.1–5.2",
+    "Scott1982/Proposition54.lean": "identity map",
+    "Scott1982/Proposition55.lean": "composition",
+    "Scott1982/Product.lean": "Def 6.1 / Prop 6.2 (skeleton)",
+    "Scott1982/Sum.lean": "Def 6.3 / Prop 6.4 (skeleton)",
+    "Scott1982/FunctionSpace.lean": "Def 7.1 / Thm 7.2 (skeleton)",
+    "Scott1982/Fixpoint.lean": "Thm 7.3 / Prop 7.4 (skeleton)",
+    "Scott1982/DomainEquation.lean": "§8 domain equations (skeleton)",
 }
 
 
 def paper_title(arxiv_text: str) -> str:
-    first = arxiv_text.splitlines()[0] if arxiv_text else "# Scott 1972"
+    first = arxiv_text.splitlines()[0] if arxiv_text else "# Scott 1982"
     if first.startswith("# "):
         return first[2:].strip()
     return first.strip()
@@ -81,15 +97,16 @@ def main() -> None:
         "**Review copy.** The narrative body matches [`arxiv.md`](arxiv.md) "
         "(excluding the title block through the first `---`). "
         "This file appends **Appendix A: Complete Lean source** with every line "
-        "of the formalization inlined below.\n\n"
+        "of the formalization inlined below. Acknowledgments are injected later when "
+        "building `arxiv.tex`.\n\n"
     )
     parts.append("---\n\n")
     parts.append("## Document map\n\n")
     parts.append("| Part | Contents |\n")
     parts.append("| --- | --- |\n")
-    parts.append("| **§1–§6** | Full `arxiv.md` narrative |\n")
-    parts.append("| **Appendix A** | Complete Lean 4 source, one subsection per file |\n\n")
-    parts.append("### Appendix A — file index\n\n")
+    parts.append("| **Narrative** | Full `arxiv.md` body (Acknowledgments added at tex build) |\n")
+    parts.append("| **Appendix** | Lean source index (in narrative) + complete Lean 4 source |\n\n")
+    parts.append("### Complete Lean source — file index\n\n")
 
     total_lines = 0
     for f in FILES:
@@ -108,9 +125,8 @@ def main() -> None:
     for f in FILES:
         parts.append(f"| {FILE_ROLES[f]} | `{f}` |\n")
     parts.append(
-        "\nPrimary source (OCR plain text): [`sources/ScottContinLatt1972.md`]"
-        "(sources/ScottContinLatt1972.md) — transcription of **[Sco72]** for use in the "
-        "Lean development (see §2).\n\n"
+        "\nPrimary source (OCR): [`sources/Domains_for_Denotational_Semantics.md`]"
+        "(sources/Domains_for_Denotational_Semantics.md) — transcription of **[Sco82]**.\n\n"
     )
     parts.append(
         "Files appear in `Scott1982.lean` import order. "
