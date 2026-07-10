@@ -353,7 +353,7 @@ flowchart TD
   P53ii["Prop 5.3(ii)<br/><i>Proposition53.lean</i>"]
   P53iii["Prop 5.3(iii)<br/><i>Proposition53.lean</i>"]
   P53iv["Prop 5.3(iv)<br/><i>Approximable.lean</i>"]
-  Sing["Singleton reduction<br/><i>Approximable.lean</i>"]
+  Sing["Singleton reduction<br/><i>Proposition53.lean</i>"]
   P53v["Prop 5.3(v)<br/><i>Proposition53.lean</i>"]
   P54["Proposition 5.4<br/><i>Proposition54.lean</i>"]
   P55["Proposition 5.5<br/><i>Proposition55.lean</i>"]
@@ -376,9 +376,8 @@ flowchart TD
 ```
 
 `Approximable.lean` imports `Constructive` and `Factoid35` (`closure`). Def 5.1–5.2 and
-5.3(i)/(iv) live there already; singleton reduction / 5.3(v)/(iii)/(ii) target
-`Proposition53.lean` (or stay in `Approximable`). Prop 5.5 imports Prop 5.4. Scott’s
-bridge (v) feeds (iii) then (ii); singleton reduction is prep for (v).
+5.3(i)/(iv) live there; singleton reduction and 5.3(v)/(iii)/(ii) are in `Proposition53.lean`.
+Prop 5.5 imports Prop 5.4. Scott’s bridge (v) feeds (iii) then (ii).
 
 #### Definition 5.1
 * **Mathematical Target:** Approximable mapping `f : A → B` as relation on `Con_A × Con_B` with
@@ -399,13 +398,13 @@ bridge (v) feeds (iii) then (ii); singleton reduction is prep for (v).
 #### Proposition 5.3(ii)
 * **Mathematical Target:** Extensionality: `f = g` iff `f(x) = g(x)` for all `x ∈ |A|`.
 * **Lean File:** `Scott1982/Proposition53.lean`
-* **Proof Notes:** **Not Yet** — from 5.3(iii) both ways + existing `ApproximableMap.ext`.
+* **Proof Notes:** **Pass** — `ext_iff_toElement` via 5.3(iii) both ways + `ApproximableMap.ext`.
+  No `sorry`.
 
 #### Proposition 5.3(iii)
 * **Mathematical Target:** Pointwise order: `f ⊆ g` (as relations) iff `f(x) ⊆ g(x)` for all `x ∈ |A|`.
 * **Lean File:** `Scott1982/Proposition53.lean`
-* **Proof Notes:** **Not Yet** — define `≤` on `ApproximableMap` as relation inclusion; both
-  directions via 5.3(v) (→ also direct from Def 5.2).
+* **Proof Notes:** **Pass** — `Le` / `le_iff_toElement_le`; ← uses 5.3(v). No `sorry`.
 
 #### Proposition 5.3(iv)
 * **Mathematical Target:** Monotonicity: `x ⊆ y` in `|A|` implies `f(x) ⊆ f(y)` in `|B|`.
@@ -415,16 +414,15 @@ bridge (v) feeds (iii) then (ii); singleton reduction is prep for (v).
 #### Singleton reduction
 * **Mathematical Target:** Scott’s remark before Def 5.2: `u f v ↔ ∀ Y ∈ v, u f {Y}`
   (for `u ∈ Con_A`, `v ∈ Con_B`).
-* **Lean File:** `Scott1982/Approximable.lean` / `Proposition53.lean`
-* **Proof Notes:** **Not Yet** — prep for 5.3(v); uses `mono` + `union_right` / `∪'`.
-  Unnumbered inventory row (not a Scott number; not worth inventing `5.2b`).
+* **Lean File:** `Scott1982/Proposition53.lean`
+* **Proof Notes:** **Pass** — `rel_iff_forall_singleton` (`mono` + `union_right` / `∪'`).
+  Unnumbered inventory row. No `sorry`.
 
 #### Proposition 5.3(v)
 * **Mathematical Target:** Bridge lemma: `u f v ↔ v̄ ⊆ f(ū)` for `u ∈ Con_A`, `v ∈ Con_B`.
-* **Lean File:** `Scott1982/Proposition53.lean` (imports `Approximable`, `Factoid35`)
-* **Proof Notes:** **Not Yet** — main subgoal. → via `subset_closure` + `mono`; ← via
-  `exists_rel_of_subset_image` on `ū` then strengthen LHS with `EntSet u u'` + `mono`.
-  Depends on singleton reduction and Def 5.2.
+* **Lean File:** `Scott1982/Proposition53.lean`
+* **Proof Notes:** **Pass** — `rel_iff_closure_le`; → via `subset_closure` + `mono`; ← via
+  `exists_rel_of_subset_image` on `ū` then `EntSet u u'` + `mono`. No `sorry`.
 
 #### Proposition 5.4
 * **Mathematical Target:** Identity `I_A` given by `u I v ↔ u ⊢ v`; `I(x) = x`.
@@ -611,6 +609,7 @@ this file.
 | `Scott1982/Factoid36.lean` | `x = ⋃{ū ∣ u ⊆ x}` |
 | `Scott1982/Factoid41.lean` | inf-semilattice under `∩` |
 | `Scott1982/Approximable.lean` | Def 5.1–5.2 |
+| `Scott1982/Proposition53.lean` | Prop 5.3(ii)(iii)(v), singleton reduction |
 | `Scott1982/Proposition54.lean` | identity map |
 | `Scott1982/Proposition55.lean` | composition |
 | *(further files as inventory lands)* | |
