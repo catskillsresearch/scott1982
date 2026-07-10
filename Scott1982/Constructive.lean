@@ -13,8 +13,9 @@ This is harder than it looks, because several of mathlib's `Finset` *operations*
 a few basic *lemmas* transitively depend on `Classical.choice` (through the
 `Multiset.dedup` / quotient machinery), in version `v4.30.0`:
 
-* tainted operations: `(· ∪ ·)`, `Finset.image`, `(· ×ˢ ·)`, `Finset.biUnion`, `(· \ ·)`;
-* tainted lemmas: e.g. `Finset.insert_comm`;
+* tainted operations: `(· ∪ ·)`, `Finset.image`, `(· ×ˢ ·)`, `Finset.biUnion`, `(· \ ·)`,
+  and mathlib's `Finset.decidableEq` (via `Multiset` quotients);
+* tainted lemmas: e.g. `Finset.insert_comm`, `Finset.singleton_subset_iff`;
 * tainted *tactics*: `tauto`, `aesop` (they close goals via classical reasoning).
 
 By contrast the following are choice-free and form our working toolkit: `insert`,
@@ -23,9 +24,10 @@ By contrast the following are choice-free and form our working toolkit: `insert`
 `Finset.coe_subset`, `Finset.mem_inter`, `Finset.ext`), set-level unions/intersections,
 and explicit term-mode/`rintro`/`constructor` proofs.
 
-This file provides the one finite-set operation the development needs but mathlib only
+This file provides the finite-set operations the development needs but mathlib only
 offers in choice-tainted form: a **binary union of `Finset`s**, built choice-free by
-folding `insert`. Every declaration here is audited to depend only on
+folding `insert`, and a **decidable equality** for `Finset` via subset antisymmetry.
+Every declaration here is audited to depend only on
 `[propext, Quot.sound]`.
 -/
 
@@ -88,5 +90,17 @@ theorem funion_subset_iff {u v w : Finset α} : u ∪' v ⊆ w ↔ u ⊆ w ∧ v
   · rintro ⟨hu, hv⟩ x hx
     rcases mem_funion.1 hx with h | h
     exacts [hu h, hv h]
+
+/-- Choice-free decidable equality for `Finset`.
+mathlib's `Finset.decidableEq` goes through `Multiset` quotients and pulls
+`Classical.choice`; this version uses only decidable membership and subset. -/
+def decidableEq_finset {α : Type*} [DecidableEq α] : DecidableEq (Finset α) :=
+  fun s t =>
+    if h : s ⊆ t ∧ t ⊆ s then
+      isTrue (Finset.Subset.antisymm h.1 h.2)
+    else
+      isFalse fun heq => by
+        subst heq
+        exact h ⟨Finset.Subset.refl _, Finset.Subset.refl _⟩
 
 end Scott1982.Constructive

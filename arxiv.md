@@ -84,7 +84,7 @@ flowchart TD
   Pr["Product.lean / Proposition62.lean<br/>Def 6.1, Prop 6.2"]
   Su["Sum.lean / Proposition64.lean<br/>Def 6.3, Prop 6.4"]
   F65["Factoid65.lean<br/>unit domain"]
-  FS["FunctionSpace.lean<br/>Def 7.1, Thm 7.2"]
+  FS["FunctionSpace.lean<br/>Def 7.1"]
   Fx["Fixpoint.lean<br/>Thm 7.3, Prop 7.4"]
   DE["DomainEquation.lean<br/>§8 constructions"]
 
@@ -101,8 +101,8 @@ flowchart TD
   Ap --> Su
   P5 --> F65
   F3 --> F65
-  Pr --> FS
-  Ap --> FS
+  C --> FS
+  P23 --> FS
   FS --> Fx
   Pr --> DE
   Su --> DE
@@ -520,26 +520,50 @@ before the sum construction.
 
 ```mermaid
 flowchart TD
-  D71["Definition 7.1<br/>A → B"]
-  T72["Theorem 7.2<br/>CCC structure"]
-  T73["Theorem 7.3<br/>fix"]
-  P74["Proposition 7.4<br/>Plotkin equations"]
-  F75["Factoid 7.5<br/>strict maps"]
-  F76["Factoid 7.6<br/>combinators const, pair, comp"]
-  D71 --> T72 --> T73 --> P74
+  C["Constructive.lean<br/><i>∪' / decidableEq_finset</i>"]
+  P23["Proposition 2.3<br/><i>Proposition23.lean</i>"]
+  Ap["Approximable.lean<br/><i>§5 maps</i>"]
+  D61["Definition 6.1<br/><i>Product.lean</i>"]
+  P62["Proposition 6.2<br/><i>Proposition62.lean</i>"]
+  P56["Proposition 5.6<br/><i>Proposition56.lean</i>"]
+  D71["Definition 7.1<br/><i>FunctionSpace.lean</i>"]
+  T72["Theorem 7.2<br/><i>Theorem72.lean</i>"]
+  T73["Theorem 7.3<br/><i>Fixpoint.lean</i>"]
+  P74["Proposition 7.4<br/><i>Proposition74.lean</i>"]
+  F75["Factoid 7.5<br/><i>Factoid75.lean</i>"]
+  F76["Factoid 7.6<br/><i>Factoid76.lean</i>"]
+  C --> D71
+  P23 --> D71
+  D71 --> T72
+  Ap --> T72
+  D61 --> T72
+  P62 --> T72
+  D71 --> T73
+  Ap --> T73
+  T73 --> P74
   T72 --> F75
   T72 --> F76
+  P56 --> F76
+  P62 --> F76
 ```
+
+`FunctionSpace.lean` (Def 7.1 / `functionSystem`) imports `Constructive` and
+`Proposition23` only. Theorem 7.2 needs approximable maps plus the product/pairing
+apparatus for `apply` / `curry`. Theorem 7.3 (`fix`) sits on the function space and
+approximable maps; Factoid 7.6 reuses `const` and `pair` as operators.
 
 #### Definition 7.1
 * **Mathematical Target:** Function-space information system `A → B` with Scott's `Con`/`⊢` on pairs of consistent sets.
 * **Lean File:** `Scott1982/FunctionSpace.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `FunToken` / `funBot`; `funInputUnion` / `funOutputUnion`;
+  `FunCon` / `FunEnt` (witness form of 7.1(iv)); `functionSystem : InfoSys _` with all six
+  Def 2.1 axioms. Choice-free `decidableEq_finset` for token equality. Axioms ⊆
+  `{propext, Quot.sound}`. No `sorry`.
 
 #### Theorem 7.2
-* **Mathematical Target:** `A → B` is an InfoSys; elements = approximable maps; `apply` and `curry` (CCC).
+* **Mathematical Target:** Elements of `|A → B|` = approximable maps; `apply` and `curry` (CCC).
 * **Lean File:** `Scott1982/Theorem72.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Not Yet** — `functionSystem` (InfoSys axioms) is Def 7.1 / `FunctionSpace.lean`.
 
 #### Theorem 7.3
 * **Mathematical Target:** Least fixed-point operator `fix : (A → A) → A`.

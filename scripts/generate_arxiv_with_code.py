@@ -64,7 +64,7 @@ FILE_ROLES: dict[str, str] = {
     "Scott1982/Sum.lean": "Def 6.3 sumSystem",
     "Scott1982/Proposition64.lean": "Prop 6.4 inl/inr/copair",
     "Scott1982/Factoid65.lean": "Factoid 6.5 unit domain",
-    "Scott1982/FunctionSpace.lean": "Def 7.1 / Thm 7.2 (skeleton)",
+    "Scott1982/FunctionSpace.lean": "Def 7.1 functionSystem",
     "Scott1982/Fixpoint.lean": "Thm 7.3 / Prop 7.4 (skeleton)",
     "Scott1982/DomainEquation.lean": "§8 domain equations (skeleton)",
 }
