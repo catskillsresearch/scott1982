@@ -231,22 +231,33 @@ Paper order: examples sit between Def 2.1 and Def 2.2; Lean matches that — eac
 
 ```mermaid
 flowchart TD
+  C["Constructive.lean<br/><i>∪' prelude</i>"]
+  P23["Proposition 2.3<br/><i>Proposition23.lean</i>"]
   D31["Definition 3.1<br/><i>InfoSys.lean</i>"]
-  F32["Factoid 3.2<br/>Δ ∈ every element"]
-  F33["Factoid 3.3<br/>⊥ least element"]
-  F34["Factoid 3.4<br/>top / Tot"]
-  F35["Factoid 3.5<br/>closure ū"]
-  F36["Factoid 3.6<br/>x = ⋃{ū ∣ u ⊆ x}"]
-  D31 --> F32 --> F33
+  F32["Factoid 3.2<br/><i>Factoid32.lean</i>"]
+  F33["Factoid 3.3<br/><i>Factoid33.lean</i>"]
+  F34["Factoid 3.4<br/><i>Factoid34.lean</i>"]
+  F35["Factoid 3.5<br/><i>Factoid35.lean</i>"]
+  F36["Factoid 3.6<br/><i>Factoid36.lean</i>"]
+  D31 --> F32
+  F32 --> F33
   D31 --> F34
-  D31 --> F35 --> F36
+  D31 --> F35
+  F35 --> F36
+  P23 --> F32
+  P23 --> F35
+  C --> F36
 ```
+
+Def 3.1 (`Element`) lives in `InfoSys.lean` with Def 2.1. Factoids 3.2/3.5 import
+`Proposition23` (for `EntSet` / `∪'` lemmas); 3.3 builds on 3.2; 3.4 needs only `InfoSys`;
+3.6 imports `Factoid35` and `Constructive` for directedness via `∪'`.
 
 #### Definition 3.1
 * **Mathematical Target:** Elements `|A|`: subsets `x ⊆ D` with (i) every finite subset in `Con`,
   (ii) closed under entailment. Total elements `Tot_A`.
 * **Lean File:** `Scott1982/InfoSys.lean` (`InfoSys.Element`, `PartialOrder`)
-* **Proof Notes:** **Pass** (core). `Tot` predicate still **Partial** — see Factoid 3.4.
+* **Proof Notes:** **Pass** — `Element` / `PartialOrder`; `IsTotal` / top via Factoid 3.4.
 
 #### Factoid 3.2
 * **Mathematical Target:** Every element contains `Δ`.
@@ -261,7 +272,9 @@ flowchart TD
 #### Factoid 3.4
 * **Mathematical Target:** Top `⊤ = D` exists iff all finite subsets are consistent; then unique total.
 * **Lean File:** `Scott1982/Factoid34.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `IsTotal` (maximal); `AllConsistent`; `topElement` with carrier `Set.univ`;
+  `exists_top_iff_allConsistent`; uniqueness `eq_topElement_of_isTotal` /
+  `exists_unique_total_of_allConsistent`. No `sorry`.
 
 #### Factoid 3.5
 * **Mathematical Target:** Closure `ū = {X ∣ u ⊢ X}` of `u ∈ Con` is an element (finite element).
@@ -272,7 +285,9 @@ flowchart TD
 * **Mathematical Target:** Every element is the directed union of its finite approximations:
   `x = ⋃{ū ∣ u ⊆ x, u ∈ Con}`.
 * **Lean File:** `Scott1982/Factoid36.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `approxUnion` / `element_eq_approxUnion` (via singleton witnesses and
+  entailment closure); `closures_directed` using `∪'`; helpers `closure_le_of_entSet`,
+  `closure_le_of_subset`, `closure_le_element`. No `sorry`.
 
 ---
 
@@ -539,7 +554,9 @@ this file.
 | `Scott1982/Factoid26.lean` | Factoid 2.6 partial-function example |
 | `Scott1982/Factoid32.lean` | Δ ∈ every element |
 | `Scott1982/Factoid33.lean` | ⊥ least |
+| `Scott1982/Factoid34.lean` | top / Tot |
 | `Scott1982/Factoid35.lean` | finite closure `ū` |
+| `Scott1982/Factoid36.lean` | `x = ⋃{ū ∣ u ⊆ x}` |
 | `Scott1982/Approximable.lean` | Def 5.1–5.2 |
 | `Scott1982/Proposition54.lean` | identity map |
 | `Scott1982/Proposition55.lean` | composition |
