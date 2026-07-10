@@ -669,8 +669,9 @@ flowchart LR
 * **Proof Notes:** **Partial** — choice-free well-founded **`LamConDepth`** (FunCon via
   `termination_by` + `decidableEq_finset`) and inductive **`LamEntDepth`** (Scott (8)–(11),
   FunEnt-style). Depth Def 2.1 fragments: `con_subset`/`con_sing` (empty/bot/atom),
-  `ent_bot`, **`ent_refl`** (`LamEntDepth_of_mem`), bot/atom `ent_con`. Next: funTok
-  `ent_con`/`ent_trans`, `lambdaSystem`, unfold. Axioms ⊆ `{propext, Quot.sound}`.
+  `ent_bot`, **`ent_refl`** (`LamEntDepth_of_mem`), bot/atom `ent_con`, world-preserving
+  Ent weaken. Next: funTok `ent_con` (Prop 2.3(ii) + FunctionSpace filter-ne), `ent_trans`,
+  `lambdaSystem`, unfold. Axioms ⊆ `{propext, Quot.sound}`.
 
 #### Factoid 8.3
 * **Mathematical Target:** Universal domain remarks (`V`, retract `U`).
