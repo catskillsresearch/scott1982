@@ -1,18 +1,22 @@
 import Scott1982.Theorem72
 import Scott1982.Factoid65
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
+import Mathlib.CategoryTheory.Monoidal.Closed.Basic
+import Mathlib.CategoryTheory.Adjunction.Basic
 
 /-!
 # Factoid 7.7 — cartesian closed structure (stretch goal)
 
 **Scott 1982 (*Categories again*).** Props 6.2 and Theorem 7.2 (with unit `1` from
 Factoid 6.5) show that information systems and approximable maps form a cartesian
-closed category. This file packages the category and finite-product structure in
-Mathlib, together with the exponential universal property as an `Equiv`
-(`Hom(A ⊗ Y, Z) ≃ Hom(Y, A → Z)` via Scott curry after product symmetry).
+closed category. This file packages that as Mathlib `Category`,
+`CartesianMonoidalCategory`, and `MonoidalClosed`.
 
-A full Mathlib `MonoidalClosed` instance (via `Adjunction.adjunctionOfEquivRight`)
-is the remaining packaging step; it needs left-naturality of `uncurryRight`.
+**Constructivity note.** The Scott-side data (products, curry/uncurry) is constructive.
+Wiring it through Mathlib’s `CategoryTheory` (chosen finite products / adjunction
+constructors) introduces `Classical.choice`. This is an artifact of Lean’s category
+library, not of Scott’s argument; the constructive core of the formalization is
+unaffected.
 -/
 
 universe u
@@ -124,6 +128,16 @@ theorem curry_uncurry {α β γ : Type*} [DecidableEq α] [DecidableEq β] [Deci
     curryMap A B C (uncurryMap A B C k) = k :=
   Eq.symm (curryMap_unique A B C (uncurryMap A B C k) k rfl)
 
+theorem swap_fst_toElement {α β : Type*} [DecidableEq α] [DecidableEq β]
+    (A : InfoSys α) (B : InfoSys β) (p : (productSystem A B).Element) :
+    (fstMap B A).toElement ((swapMap A B).toElement p) = (sndMap A B).toElement p := by
+  rw [← acomp_toElement, acomp_swap_fst]
+
+theorem swap_snd_toElement {α β : Type*} [DecidableEq α] [DecidableEq β]
+    (A : InfoSys α) (B : InfoSys β) (p : (productSystem A B).Element) :
+    (sndMap B A).toElement ((swapMap A B).toElement p) = (fstMap A B).toElement p := by
+  rw [← acomp_toElement, acomp_swap_snd]
+
 end ApproximableMap
 
 open ApproximableMap
@@ -163,7 +177,7 @@ def productLimitCone (X Y : InfoSysObj.{u}) : LimitCone (pair X Y) where
       exact @pairMap_unique X.Token Y.Token T.Token _ _ _
         X.sys Y.sys T.sys f g m hf hg
 
-instance : CartesianMonoidalCategory.{u, u + 1} InfoSysObj.{u} :=
+noncomputable instance : CartesianMonoidalCategory.{u, u + 1} InfoSysObj.{u} :=
   CartesianMonoidalCategory.ofChosenFiniteProducts terminalLimitCone productLimitCone
 
 theorem tensorObj_eq_prod (A Y : InfoSysObj.{u}) : A ⊗ Y = InfoSysObj.prod A Y := rfl
@@ -171,11 +185,13 @@ theorem tensorObj_eq_prod (A Y : InfoSysObj.{u}) : A ⊗ Y = InfoSysObj.prod A Y
 /-! ## Braided curry (Mathlib convention) -/
 
 /-- `Hom(A ⊗ Y, Z) → Hom(Y, A → Z)` via Scott curry after swap. -/
-def curryRight (A Y Z : InfoSysObj.{u}) (h : A ⊗ Y ⟶ Z) : Y ⟶ InfoSysObj.exp A Z :=
+noncomputable def curryRight (A Y Z : InfoSysObj.{u}) (h : A ⊗ Y ⟶ Z) :
+    Y ⟶ InfoSysObj.exp A Z :=
   curryMap Y.sys A.sys Z.sys (acomp (swapMap Y.sys A.sys) h)
 
 /-- Inverse of `curryRight`. -/
-def uncurryRight (A Y Z : InfoSysObj.{u}) (k : Y ⟶ InfoSysObj.exp A Z) : A ⊗ Y ⟶ Z :=
+noncomputable def uncurryRight (A Y Z : InfoSysObj.{u}) (k : Y ⟶ InfoSysObj.exp A Z) :
+    A ⊗ Y ⟶ Z :=
   acomp (swapMap A.sys Y.sys) (uncurryMap Y.sys A.sys Z.sys k)
 
 theorem uncurryRight_curryRight (A Y Z : InfoSysObj.{u}) (h : A ⊗ Y ⟶ Z) :
@@ -211,7 +227,7 @@ theorem curryRight_uncurryRight (A Y Z : InfoSysObj.{u}) (k : Y ⟶ InfoSysObj.e
     (curry_uncurry Y.sys A.sys Z.sys k)
 
 /-- Hom-set equivalence for the exponential (Scott curry after braiding). -/
-def tensorExpEquiv (A : InfoSysObj.{u}) (Y Z : InfoSysObj.{u}) :
+noncomputable def tensorExpEquiv (A : InfoSysObj.{u}) (Y Z : InfoSysObj.{u}) :
     (A ⊗ Y ⟶ Z) ≃ (Y ⟶ InfoSysObj.exp A Z) where
   toFun := curryRight A Y Z
   invFun := uncurryRight A Y Z
@@ -229,6 +245,121 @@ theorem tensorLeft_map_eq (A : InfoSysObj.{u}) {Y Y' : InfoSysObj.{u}} (f : Y �
     exact CartesianMonoidalCategory.whiskerLeft_fst (X := A) (Y := Y) (Z := Y') f
   · change ((tensorLeft A).map f) ≫ sndMap A.sys Y'.sys = sndMap A.sys Y.sys ≫ f
     exact CartesianMonoidalCategory.whiskerLeft_snd (X := A) (Y := Y) (Z := Y') f
+
+/-! ## Left naturality of uncurry / MonoidalClosed -/
+
+private theorem lift_snd_toElement (A : InfoSysObj.{u}) {Y Y' : InfoSysObj.{u}}
+    (f : Y' ⟶ Y) (p : (A ⊗ Y').sys.Element) :
+    (sndMap A.sys Y.sys).toElement
+        ((pairMap A.sys Y.sys (fstMap A.sys Y'.sys)
+            (acomp (sndMap A.sys Y'.sys) f)).toElement p) =
+      f.toElement ((sndMap A.sys Y'.sys).toElement p) := by
+  have e :
+      acomp (pairMap A.sys Y.sys (fstMap A.sys Y'.sys) (acomp (sndMap A.sys Y'.sys) f))
+        (sndMap A.sys Y.sys) =
+      acomp (sndMap A.sys Y'.sys) f := by
+    simp only [acomp, comp_sndMap_pairMap]
+  simpa [acomp_toElement] using congrArg (fun φ => φ.toElement p) e
+
+private theorem lift_fst_toElement (A : InfoSysObj.{u}) {Y Y' : InfoSysObj.{u}}
+    (f : Y' ⟶ Y) (p : (A ⊗ Y').sys.Element) :
+    (fstMap A.sys Y.sys).toElement
+        ((pairMap A.sys Y.sys (fstMap A.sys Y'.sys)
+            (acomp (sndMap A.sys Y'.sys) f)).toElement p) =
+      (fstMap A.sys Y'.sys).toElement p := by
+  have e :
+      acomp (pairMap A.sys Y.sys (fstMap A.sys Y'.sys) (acomp (sndMap A.sys Y'.sys) f))
+        (fstMap A.sys Y.sys) =
+      fstMap A.sys Y'.sys := by
+    simp only [acomp, comp_fstMap_pairMap]
+  simpa [acomp_toElement] using congrArg (fun φ => φ.toElement p) e
+
+private theorem pair_after_swap_toElement (A Y Z : InfoSysObj.{u})
+    (φ : Y ⟶ InfoSysObj.exp A Z) (p : (A ⊗ Y).sys.Element) :
+    (pairMap (functionSystem A.sys Z.sys) A.sys
+        (ApproximableMap.comp φ (fstMap Y.sys A.sys))
+        (sndMap Y.sys A.sys)).toElement ((swapMap A.sys Y.sys).toElement p) =
+      pairElements (functionSystem A.sys Z.sys) A.sys
+        (φ.toElement ((fstMap Y.sys A.sys).toElement ((swapMap A.sys Y.sys).toElement p)))
+        ((sndMap Y.sys A.sys).toElement ((swapMap A.sys Y.sys).toElement p)) := by
+  refine element_eq_of_fst_snd _ _ _ _ ?_ ?_
+  · rw [← comp_toElement, comp_fstMap_pairMap, comp_toElement]
+    exact (fstMap_pairElements _ _ _ _).symm
+  · rw [← comp_toElement, comp_sndMap_pairMap]
+    exact (sndMap_pairElements _ _ _ _).symm
+
+theorem uncurryRight_toElement (A Y Z : InfoSysObj.{u})
+    (φ : Y ⟶ InfoSysObj.exp A Z) (q : (A ⊗ Y).sys.Element) :
+    (uncurryRight A Y Z φ).toElement q =
+      (element_toApproxMap A.sys Z.sys
+          (φ.toElement ((fstMap Y.sys A.sys).toElement
+            ((swapMap A.sys Y.sys).toElement q)))).toElement
+        ((sndMap Y.sys A.sys).toElement ((swapMap A.sys Y.sys).toElement q)) := by
+  simp only [uncurryRight, acomp_toElement, uncurryMap]
+  change (ApproximableMap.comp (applyMap (B := A.sys) (C := Z.sys))
+      (pairMap _ _ (ApproximableMap.comp φ (fstMap _ _)) (sndMap _ _))).toElement
+    ((swapMap A.sys Y.sys).toElement q) = _
+  rw [comp_toElement, pair_after_swap_toElement A Y Z φ q, applyMap_toElement]
+
+theorem uncurryRight_comp_left (A : InfoSysObj.{u}) {Y Y' Z : InfoSysObj.{u}}
+    (f : Y' ⟶ Y) (g : Y ⟶ InfoSysObj.exp A Z) :
+    uncurryRight A Y' Z (f ≫ g) = (tensorLeft A).map f ≫ uncurryRight A Y Z g := by
+  rw [tensorLeft_map_eq]
+  refine (ext_iff_toElement _ _).2 fun p => ?_
+  set lift :=
+    pairMap A.sys Y.sys (fstMap A.sys Y'.sys) (acomp (sndMap A.sys Y'.sys) f)
+  have hgoal :
+      (uncurryRight A Y' Z (f ≫ g)).toElement p =
+        (uncurryRight A Y Z g).toElement (lift.toElement p) := by
+    rw [uncurryRight_toElement A Y' Z (f ≫ g) p,
+      uncurryRight_toElement A Y Z g (lift.toElement p)]
+    rw [swap_fst_toElement, swap_snd_toElement, swap_fst_toElement, swap_snd_toElement,
+      lift_snd_toElement A f p, lift_fst_toElement A f p]
+    simp only [CategoryStruct.comp, acomp_toElement]
+  change _ = (acomp lift (uncurryRight A Y Z g)).toElement p
+  exact hgoal.trans (acomp_toElement lift (uncurryRight A Y Z g) p).symm
+
+theorem tensorExpEquiv_natural (A : InfoSysObj.{u}) {Y' Y Z : InfoSysObj.{u}}
+    (f : Y' ⟶ Y) (g : A ⊗ Y ⟶ Z) :
+    tensorExpEquiv A Y' Z ((tensorLeft A).map f ≫ g) =
+      f ≫ tensorExpEquiv A Y Z g := by
+  apply (tensorExpEquiv A Y' Z).symm.injective
+  change uncurryRight A Y' Z
+      (tensorExpEquiv A Y' Z ((tensorLeft A).map f ≫ g)) =
+    uncurryRight A Y' Z (f ≫ tensorExpEquiv A Y Z g)
+  simp only [tensorExpEquiv, Equiv.coe_fn_mk]
+  have h := uncurryRight_comp_left A f (curryRight A Y Z g)
+  rw [uncurryRight_curryRight] at h
+  rw [uncurryRight_curryRight, h]
+  rfl
+
+/-- Right adjoint to `tensorLeft A` from the curry equivalence. -/
+noncomputable def expFunctor (A : InfoSysObj.{u}) : InfoSysObj.{u} ⥤ InfoSysObj.{u} :=
+  Adjunction.rightAdjointOfEquiv (F := tensorLeft A) (tensorExpEquiv A)
+    fun _Y' _Y _Z f g => by
+      simpa using tensorExpEquiv_natural A f g
+
+noncomputable def tensorExpAdjunction (A : InfoSysObj.{u}) :
+    tensorLeft A ⊣ expFunctor A :=
+  Adjunction.adjunctionOfEquivRight (F := tensorLeft A) (tensorExpEquiv A)
+    fun _Y' _Y _Z f g => by
+      simpa using tensorExpEquiv_natural A f g
+
+theorem expFunctor_obj (A Z : InfoSysObj.{u}) :
+    (expFunctor A).obj Z = InfoSysObj.exp A Z :=
+  rfl
+
+noncomputable instance (A : InfoSysObj.{u}) : Closed A where
+  rightAdj := expFunctor A
+  adj := tensorExpAdjunction A
+
+noncomputable instance : MonoidalClosed InfoSysObj.{u} where
+  closed _ := inferInstance
+
+/-- The Mathlib exponential is Scott’s function space on objects. -/
+theorem ihom_obj_eq_exp (A B : InfoSysObj.{u}) :
+    (ihom A).obj B = InfoSysObj.exp A B :=
+  rfl
 
 end InfoSys
 
