@@ -199,7 +199,10 @@ flowchart TD
 #### Factoid 2.5
 * **Mathematical Target:** Second example: open intervals `(n, m)` with `n < m`, plus `(0, ∞)`.
 * **Lean File:** `Scott1982/Factoid25.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `Token = bot ⊕ strict intervals`; satisfaction on `ℚ`;
+  `ofSatisfaction` builds any Scott-style semantic `InfoSys` from `Sat` + true `bot` +
+  inhabited singletons. `Ent` pairs consistency of the LHS with `∀`-entailment (so `ent_con`
+  is not vacuous). Midpoint witness for singletons. No `sorry`.
 
 #### Factoid 2.6
 * **Mathematical Target:** Third example: partial functions `A ⇀ B` as graphs plus `Δ`.
@@ -530,6 +533,7 @@ builds `arxiv_with_code.md` from this file plus the Lean source.
 | `Scott1982/Definition22.lean` | Def 2.2 `EntSet` |
 | `Scott1982/Proposition23.lean` | Prop 2.3 |
 | `Scott1982/Factoid24.lean` | Factoid 2.4 ℕ lower-bound example |
+| `Scott1982/Factoid25.lean` | Factoid 2.5 interval example |
 | `Scott1982/Factoid32.lean` | Δ ∈ every element |
 | `Scott1982/Factoid33.lean` | ⊥ least |
 | `Scott1982/Factoid35.lean` | finite closure `ū` |

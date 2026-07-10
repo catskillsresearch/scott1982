@@ -3,6 +3,7 @@ import Scott1982.InfoSys
 import Scott1982.Definition22
 import Scott1982.Proposition23
 import Scott1982.Factoid24
+import Scott1982.Factoid25
 import Scott1982.Factoid32
 import Scott1982.Factoid33
 import Scott1982.Factoid35
