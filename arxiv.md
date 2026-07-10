@@ -642,18 +642,26 @@ the CCC as Mathlib `Category` / `CartesianMonoidalCategory` / `MonoidalClosed`
 ### §8 Some domain equations
 
 ```mermaid
-flowchart TD
-  F81["Factoid 8.1<br/>trees T ≅ A + (T × T)"]
+flowchart LR
+  P62["Proposition 6.2<br/><i>Product</i>"]
+  P64["Proposition 6.4<br/><i>Sum</i>"]
+  F81["Factoid 8.1<br/><i>Factoid81.lean — trees</i>"]
   F82["Factoid 8.2<br/>λ-model D ≅ A + (D → D)"]
   F83["Factoid 8.3<br/>universal V / U"]
   F84["Factoid 8.4<br/>domain of domains"]
+  P62 --> F81
+  P64 --> F81
   F81 --> F82 --> F83 --> F84
 ```
 
 #### Factoid 8.1
 * **Mathematical Target:** Inductive construction of tree / S-expression domain `T ≅ A + (T × T)`.
-* **Lean File:** `Scott1982/DomainEquation.lean` / `Factoid81.lean`
-* **Proof Notes:** **Not Yet**
+* **Lean File:** `Scott1982/Factoid81.lean`
+* **Proof Notes:** **Pass** — inductive `TreeToken` (Scott (1)–(3)); projection-based
+  `TreeCon` / `TreeEnt` matching sum×product clauses (4)–(12); `treeSystem : InfoSys _`
+  with all six Def 2.1 axioms; unfolding `treeUnfold` / `treeRhs` into
+  `sumSystem A (productSystem (treeSystem A) (treeSystem A))`. Axioms ⊆
+  `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 8.2
 * **Mathematical Target:** λ-calculus model `D ≅ A + (D → D)` via mutual recursion of `D` and `Con`.

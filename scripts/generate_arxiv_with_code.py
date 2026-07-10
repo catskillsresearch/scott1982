@@ -37,6 +37,7 @@ FILES = [
     "Scott1982/FunctionSpace.lean",
     "Scott1982/Factoid77.lean",
     "Scott1982/Fixpoint.lean",
+    "Scott1982/Factoid81.lean",
     "Scott1982/DomainEquation.lean",
 ]
 
@@ -68,7 +69,8 @@ FILE_ROLES: dict[str, str] = {
     "Scott1982/FunctionSpace.lean": "Def 7.1 functionSystem",
     "Scott1982/Factoid77.lean": "Factoid 7.7 CCC via CategoryTheory (stretch)",
     "Scott1982/Fixpoint.lean": "Thm 7.3 / Prop 7.4 (skeleton)",
-    "Scott1982/DomainEquation.lean": "§8 domain equations (skeleton)",
+    "Scott1982/Factoid81.lean": "Factoid 8.1 tree domain T ≅ A + (T × T)",
+    "Scott1982/DomainEquation.lean": "§8 domain equations hub",
 }
 
 
