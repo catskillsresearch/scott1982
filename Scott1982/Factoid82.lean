@@ -1,0 +1,593 @@
+import Scott1982.FunctionSpace
+import Scott1982.Sum
+
+/-!
+# Factoid 8.2 — λ-calculus model `D ≅ A + (D → D)` (Partial)
+
+**Scott 1982, §8.** `D` and `Con_D` are mutually recursive. Lean rejects putting the
+FunCon-style clause (7) inside an inductive (negative occurrence), so we **stage**
+consistency: `LamConN n` at stage `0` is atom/bot only; stage `n+1` may add function
+tokens whose components and FunCon checks live at stage `n`. Then
+`LamCon u := ∃ n, LamConN n u`. Entailment is staged the same way as `LamEntN`
+(Scott (8)–(11)).
+
+**Status:** `RawLamToken` / `LamToken`, staged `LamCon` / `LamEnt`, and Def 2.1
+fragments `con_subset` / `con_sing` / `ent_bot` are proved. Full `InfoSys`
+(`ent_refl` / `ent_con` / `ent_trans`, especially on `funTok`) and the unfolding
+into `sumSystem A (functionSystem D D)` remain.
+-/
+
+namespace Scott1982
+
+open Scott1982.Constructive
+
+namespace InfoSys
+
+set_option linter.unusedSectionVars false
+
+variable {α : Type*} [DecidableEq α]
+
+/-! ## Raw tokens + decidable equality -/
+
+inductive RawLamToken (α : Type*) where
+  | bot : RawLamToken α
+  | atom : α → RawLamToken α
+  | funTok : List (RawLamToken α) → List (RawLamToken α) → RawLamToken α
+
+def listToFinset {β : Type*} [DecidableEq β] : List β → Finset β
+  | [] => ∅
+  | x :: xs => insert x (listToFinset xs)
+
+theorem mem_listToFinset {β : Type*} [DecidableEq β] {x : β} {xs : List β} :
+    x ∈ listToFinset xs ↔ x ∈ xs := by
+  induction xs with
+  | nil =>
+    constructor
+    · intro h; exact False.elim (Finset.notMem_empty x h)
+    · intro h; cases h
+  | cons a as ih =>
+    simp only [listToFinset, Finset.mem_insert, List.mem_cons, ih]
+
+mutual
+  def rawLamBEq : RawLamToken α → RawLamToken α → Bool
+    | .bot, .bot => true
+    | .atom x, .atom y => decide (x = y)
+    | .funTok u v, .funTok u' v' => rawLamListBEq u u' && rawLamListBEq v v'
+    | _, _ => false
+  def rawLamListBEq : List (RawLamToken α) → List (RawLamToken α) → Bool
+    | [], [] => true
+    | x :: xs, y :: ys => rawLamBEq x y && rawLamListBEq xs ys
+    | _, _ => false
+end
+
+mutual
+  theorem rawLamBEq_eq : ∀ a b : RawLamToken α, rawLamBEq a b = true ↔ a = b
+  | .bot, .bot => by simp [rawLamBEq]
+  | .atom x, .atom y => by
+      simp only [rawLamBEq, decide_eq_true_eq]
+      exact ⟨congrArg RawLamToken.atom, RawLamToken.atom.inj⟩
+  | .funTok u v, .funTok u' v' => by
+      simp only [rawLamBEq, Bool.and_eq_true]
+      constructor
+      · intro ⟨hu, hv⟩
+        rw [(rawLamListBEq_eq u u').1 hu, (rawLamListBEq_eq v v').1 hv]
+      · intro h
+        injection h with hu hv
+        subst hu; subst hv
+        exact ⟨(rawLamListBEq_eq u u).2 rfl, (rawLamListBEq_eq v v).2 rfl⟩
+  | .bot, .atom _ | .bot, .funTok _ _ | .atom _, .bot | .atom _, .funTok _ _
+  | .funTok _ _, .bot | .funTok _ _, .atom _ => by
+      constructor
+      · intro h; simp [rawLamBEq] at h
+      · intro h; cases h
+  theorem rawLamListBEq_eq : ∀ u v : List (RawLamToken α), rawLamListBEq u v = true ↔ u = v
+  | [], [] => by simp [rawLamListBEq]
+  | x :: xs, y :: ys => by
+      simp only [rawLamListBEq, Bool.and_eq_true]
+      constructor
+      · intro ⟨hx, hxs⟩
+        rw [(rawLamBEq_eq x y).1 hx, (rawLamListBEq_eq xs ys).1 hxs]
+      · intro h
+        injection h with hx hxs
+        subst hx; subst hxs
+        exact ⟨(rawLamBEq_eq x x).2 rfl, (rawLamListBEq_eq xs xs).2 rfl⟩
+  | [], _ :: _ | _ :: _, [] => by
+      constructor
+      · intro h; simp [rawLamListBEq] at h
+      · intro h; cases h
+end
+
+instance : DecidableEq (RawLamToken α) := fun a b =>
+  if h : rawLamBEq a b = true then isTrue ((rawLamBEq_eq a b).1 h)
+  else isFalse fun hab => h ((rawLamBEq_eq a b).2 hab)
+
+/-! ## Projections -/
+
+private def lamAtomInsert : RawLamToken α → Finset α → Finset α
+  | .atom x => insert x
+  | .bot | .funTok _ _ => id
+
+private def lamFunInsert :
+    RawLamToken α → Finset (List (RawLamToken α) × List (RawLamToken α)) →
+      Finset (List (RawLamToken α) × List (RawLamToken α))
+  | .funTok u v => insert (u, v)
+  | .bot | .atom _ => id
+
+private instance : LeftCommutative (lamAtomInsert : RawLamToken α → Finset α → Finset α) :=
+  ⟨fun p q s => by cases p <;> cases q <;> first | exact insert_comm' _ _ s | rfl⟩
+
+private instance : LeftCommutative
+    (lamFunInsert : RawLamToken α →
+      Finset (List (RawLamToken α) × List (RawLamToken α)) →
+        Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+  ⟨fun p q s => by cases p <;> cases q <;> first | exact insert_comm' _ _ s | rfl⟩
+
+def lamAtomFinset (u : Finset (RawLamToken α)) : Finset α :=
+  Multiset.foldr lamAtomInsert ∅ u.1
+
+def lamFunFinset (u : Finset (RawLamToken α)) :
+    Finset (List (RawLamToken α) × List (RawLamToken α)) :=
+  Multiset.foldr lamFunInsert ∅ u.1
+
+theorem mem_lamAtomFinset {u : Finset (RawLamToken α)} {x : α} :
+    x ∈ lamAtomFinset u ↔ .atom x ∈ u := by
+  have aux (s : Multiset (RawLamToken α)) :
+      x ∈ Multiset.foldr lamAtomInsert (∅ : Finset α) s ↔ ∃ p ∈ s, p = .atom x := by
+    refine Multiset.induction_on s ?_ ?_
+    · constructor
+      · intro hx; exact False.elim (Finset.notMem_empty x hx)
+      · rintro ⟨_, hp, _⟩; exact False.elim (by cases hp)
+    · intro p t ih
+      cases p with
+      | atom a =>
+        simp only [Multiset.foldr_cons, lamAtomInsert, Finset.mem_insert, ih, Multiset.mem_cons]
+        constructor
+        · rintro (hx | ⟨q, hq, hq'⟩)
+          · exact ⟨.atom a, Or.inl rfl, congrArg RawLamToken.atom hx.symm⟩
+          · exact ⟨q, Or.inr hq, hq'⟩
+        · rintro ⟨q, hq, hq'⟩
+          rcases hq with rfl | hq
+          · injection hq' with hx; exact Or.inl hx.symm
+          · exact Or.inr ⟨q, hq, hq'⟩
+      | bot | funTok _ _ =>
+        simp only [Multiset.foldr_cons, lamAtomInsert, id_eq, ih, Multiset.mem_cons]
+        constructor
+        · rintro ⟨q, hq, hq'⟩; exact ⟨q, Or.inr hq, hq'⟩
+        · rintro ⟨q, hq, hq'⟩
+          rcases hq with rfl | hq
+          · exact False.elim (nomatch hq')
+          · exact ⟨q, hq, hq'⟩
+  constructor
+  · intro hx
+    rcases (aux u.1).1 hx with ⟨p, hp, hp'⟩
+    subst hp'; exact Finset.mem_def.2 hp
+  · intro hx
+    exact (aux u.1).2 ⟨.atom x, Finset.mem_def.1 hx, rfl⟩
+
+theorem mem_lamFunFinset {u : Finset (RawLamToken α)}
+    {p : List (RawLamToken α) × List (RawLamToken α)} :
+    p ∈ lamFunFinset u ↔ .funTok p.1 p.2 ∈ u := by
+  have aux (s : Multiset (RawLamToken α)) :
+      p ∈ Multiset.foldr lamFunInsert ∅ s ↔ ∃ t ∈ s, t = .funTok p.1 p.2 := by
+    refine Multiset.induction_on s ?_ ?_
+    · constructor
+      · intro hp; exact False.elim (Finset.notMem_empty p hp)
+      · rintro ⟨_, ht, _⟩; exact False.elim (by cases ht)
+    · intro t rest ih
+      cases t with
+      | funTok u v =>
+        simp only [Multiset.foldr_cons, lamFunInsert, Finset.mem_insert, ih, Multiset.mem_cons]
+        constructor
+        · rintro (hp | ⟨q, hq, hq'⟩)
+          · exact ⟨.funTok u v, Or.inl rfl, by cases hp; rfl⟩
+          · exact ⟨q, Or.inr hq, hq'⟩
+        · rintro ⟨q, hq, hq'⟩
+          rcases hq with rfl | hq
+          · injection hq' with hu hv
+            exact Or.inl (Prod.ext hu.symm hv.symm)
+          · exact Or.inr ⟨q, hq, hq'⟩
+      | bot | atom _ =>
+        simp only [Multiset.foldr_cons, lamFunInsert, id_eq, ih, Multiset.mem_cons]
+        constructor
+        · rintro ⟨q, hq, hq'⟩; exact ⟨q, Or.inr hq, hq'⟩
+        · rintro ⟨q, hq, hq'⟩
+          rcases hq with rfl | hq
+          · exact False.elim (nomatch hq')
+          · exact ⟨q, hq, hq'⟩
+  constructor
+  · intro hp
+    rcases (aux u.1).1 hp with ⟨t, ht, ht'⟩
+    subst ht'; exact Finset.mem_def.2 ht
+  · intro hp
+    exact (aux u.1).2 ⟨.funTok p.1 p.2, Finset.mem_def.1 hp, rfl⟩
+
+theorem lamAtomFinset_empty : lamAtomFinset (∅ : Finset (RawLamToken α)) = ∅ := rfl
+theorem lamFunFinset_empty : lamFunFinset (∅ : Finset (RawLamToken α)) = ∅ := rfl
+
+theorem lamAtomFinset_mono {u v : Finset (RawLamToken α)} (h : v ⊆ u) :
+    lamAtomFinset v ⊆ lamAtomFinset u :=
+  fun _ hx => mem_lamAtomFinset.2 (h (mem_lamAtomFinset.1 hx))
+
+theorem lamFunFinset_mono {u v : Finset (RawLamToken α)} (h : v ⊆ u) :
+    lamFunFinset v ⊆ lamFunFinset u :=
+  fun _ hp => mem_lamFunFinset.2 (h (mem_lamFunFinset.1 hp))
+
+private def lamInUnionInsert [DecidableEq (RawLamToken α)] :
+    List (RawLamToken α) × List (RawLamToken α) → Finset (RawLamToken α) →
+      Finset (RawLamToken α)
+  | p, acc => listToFinset p.1 ∪' acc
+
+private def lamOutUnionInsert [DecidableEq (RawLamToken α)] :
+    List (RawLamToken α) × List (RawLamToken α) → Finset (RawLamToken α) →
+      Finset (RawLamToken α)
+  | p, acc => listToFinset p.2 ∪' acc
+
+private instance [DecidableEq (RawLamToken α)] :
+    LeftCommutative (lamInUnionInsert (α := α)) :=
+  ⟨fun p q s => by
+    simp only [lamInUnionInsert]
+    ext x; simp only [mem_funion]
+    constructor <;> · rintro (h | h | h); exacts [Or.inr (Or.inl h), Or.inl h, Or.inr (Or.inr h)]⟩
+
+private instance [DecidableEq (RawLamToken α)] :
+    LeftCommutative (lamOutUnionInsert (α := α)) :=
+  ⟨fun p q s => by
+    simp only [lamOutUnionInsert]
+    ext x; simp only [mem_funion]
+    constructor <;> · rintro (h | h | h); exacts [Or.inr (Or.inl h), Or.inl h, Or.inr (Or.inr h)]⟩
+
+def lamInputUnion (s : Finset (List (RawLamToken α) × List (RawLamToken α))) :
+    Finset (RawLamToken α) :=
+  Multiset.foldr (lamInUnionInsert (α := α)) ∅ s.1
+
+def lamOutputUnion (s : Finset (List (RawLamToken α) × List (RawLamToken α))) :
+    Finset (RawLamToken α) :=
+  Multiset.foldr (lamOutUnionInsert (α := α)) ∅ s.1
+
+theorem lamInputUnion_empty :
+    lamInputUnion (∅ : Finset (List (RawLamToken α) × List (RawLamToken α))) = ∅ := by
+  rfl
+
+theorem lamOutputUnion_empty :
+    lamOutputUnion (∅ : Finset (List (RawLamToken α) × List (RawLamToken α))) = ∅ := by
+  rfl
+
+/-! ## Staged consistency -/
+
+variable (A : InfoSys α)
+
+/-- Stage-`n` consistency (Scott (4)–(7), stratified). -/
+def LamConN : ℕ → Finset (RawLamToken α) → Prop
+  | 0, u => lamAtomFinset u ∈ A.Con ∧ lamFunFinset u = ∅
+  | n + 1, u =>
+      LamConN n u ∨
+        (lamAtomFinset u = ∅ ∧
+          (∀ p ∈ lamFunFinset u,
+            LamConN n (listToFinset p.1) ∧ LamConN n (listToFinset p.2)) ∧
+            ∀ s ⊆ lamFunFinset u,
+              LamConN n (lamInputUnion s) → LamConN n (lamOutputUnion s))
+
+def LamCon (u : Finset (RawLamToken α)) : Prop :=
+  ∃ n, LamConN A n u
+
+theorem LamConN_mono {n m : ℕ} (hmn : n ≤ m) {u : Finset (RawLamToken α)}
+    (hu : LamConN A n u) : LamConN A m u := by
+  induction hmn with
+  | refl => exact hu
+  | step _ ih => exact Or.inl ih
+
+theorem LamCon_empty : LamCon A (∅ : Finset (RawLamToken α)) :=
+  ⟨0, by
+    change lamAtomFinset ∅ ∈ A.Con ∧ lamFunFinset ∅ = ∅
+    rw [lamAtomFinset_empty, lamFunFinset_empty]
+    exact ⟨A.con_empty, rfl⟩⟩
+
+theorem LamCon_singleton_bot : LamCon A ({.bot} : Finset (RawLamToken α)) := by
+  refine ⟨0, ?_⟩
+  change lamAtomFinset _ ∈ A.Con ∧ lamFunFinset _ = ∅
+  constructor
+  · have h : lamAtomFinset ({.bot} : Finset (RawLamToken α)) = ∅ := by
+      ext x
+      constructor
+      · intro hx; exact False.elim (nomatch mem_lamAtomFinset.1 hx)
+      · intro hx; exact False.elim (Finset.notMem_empty x hx)
+    rw [h]; exact A.con_empty
+  · ext p
+    constructor
+    · intro hp; exact False.elim (nomatch mem_lamFunFinset.1 hp)
+    · intro hp; exact False.elim (Finset.notMem_empty p hp)
+
+theorem LamCon_singleton_atom (x : α) :
+    LamCon A ({.atom x} : Finset (RawLamToken α)) := by
+  refine ⟨0, ?_⟩
+  change lamAtomFinset _ ∈ A.Con ∧ lamFunFinset _ = ∅
+  constructor
+  · have h : lamAtomFinset ({.atom x} : Finset (RawLamToken α)) = {x} := by
+      ext y
+      simp only [mem_lamAtomFinset, Finset.mem_singleton]
+      exact ⟨RawLamToken.atom.inj, congrArg RawLamToken.atom⟩
+    rw [h]; exact A.con_sing x
+  · ext p
+    constructor
+    · intro hp; exact False.elim (nomatch mem_lamFunFinset.1 hp)
+    · intro hp; exact False.elim (Finset.notMem_empty p hp)
+
+theorem LamCon_subset {u : Finset (RawLamToken α)} (hu : LamCon A u) :
+    ∀ {v}, v ⊆ u → LamCon A v := by
+  rcases hu with ⟨n, hu⟩
+  induction n generalizing u with
+  | zero =>
+    intro v hv
+    refine ⟨0, ?_⟩
+    change lamAtomFinset v ∈ A.Con ∧ lamFunFinset v = ∅
+    rcases (hu : lamAtomFinset u ∈ A.Con ∧ lamFunFinset u = ∅) with ⟨hA, hF⟩
+    exact ⟨A.con_subset hA (lamAtomFinset_mono hv),
+      Finset.Subset.antisymm
+        (fun p hp => by
+          have : p ∈ lamFunFinset u := lamFunFinset_mono hv hp
+          rw [hF] at this; exact False.elim (Finset.notMem_empty p this))
+        (Finset.empty_subset _)⟩
+  | succ n ih =>
+    intro v hv
+    rcases hu with hu | ⟨hA, hWF, hFun⟩
+    · exact ih hu hv
+    · refine ⟨n + 1, Or.inr ⟨?_, ?_, ?_⟩⟩
+      · exact Finset.Subset.antisymm
+          (fun x hx => by
+            have : x ∈ lamAtomFinset u := lamAtomFinset_mono hv hx
+            rw [hA] at this; exact False.elim (Finset.notMem_empty x this))
+          (Finset.empty_subset _)
+      · intro p hp; exact hWF p (lamFunFinset_mono hv hp)
+      · intro s hs hIn
+        exact hFun s (fun p hp => lamFunFinset_mono hv (hs hp)) hIn
+
+/-- Well-formed tokens (Scott (1)–(3)). -/
+def IsLamToken : RawLamToken α → Prop
+  | .bot | .atom _ => True
+  | .funTok u v => LamCon A (listToFinset u) ∧ LamCon A (listToFinset v)
+
+def LamToken : Type _ := { t : RawLamToken α // IsLamToken A t }
+
+instance : DecidableEq (LamToken A) := Subtype.instDecidableEq
+
+def lamBot : LamToken A := ⟨.bot, trivial⟩
+
+def lamForget (t : LamToken A) : RawLamToken α := t.val
+
+private def lamForgetInsert :
+    LamToken A → Finset (RawLamToken α) → Finset (RawLamToken α) :=
+  fun t => insert (lamForget A t)
+
+private instance : LeftCommutative (lamForgetInsert (A := A)) :=
+  ⟨fun p q s => insert_comm' (lamForget A p) (lamForget A q) s⟩
+
+def lamForgetFinset (u : Finset (LamToken A)) : Finset (RawLamToken α) :=
+  Multiset.foldr (lamForgetInsert (A := A)) ∅ u.1
+
+private theorem mem_foldr_lamForget (s : Multiset (LamToken A)) (t : RawLamToken α) :
+    t ∈ Multiset.foldr (lamForgetInsert (A := A)) ∅ s ↔ ∃ p ∈ s, p.val = t := by
+  refine Multiset.induction_on s ?_ ?_
+  · constructor
+    · intro ht; exact False.elim (Finset.notMem_empty t ht)
+    · rintro ⟨_, hp, _⟩; exact False.elim (by cases hp)
+  · intro p rest ih
+    simp only [Multiset.foldr_cons, lamForgetInsert, Finset.mem_insert, ih, Multiset.mem_cons]
+    constructor
+    · rintro (rfl | ⟨q, hq, hq'⟩)
+      · exact ⟨p, Or.inl rfl, rfl⟩
+      · exact ⟨q, Or.inr hq, hq'⟩
+    · rintro ⟨q, hq, hq'⟩
+      rcases hq with rfl | hq
+      · exact Or.inl hq'.symm
+      · exact Or.inr ⟨q, hq, hq'⟩
+
+theorem mem_lamForgetFinset {u : Finset (LamToken A)} {t : RawLamToken α} :
+    t ∈ lamForgetFinset A u ↔ ∃ p ∈ u, p.val = t := by
+  simpa [lamForgetFinset] using mem_foldr_lamForget A u.1 t
+
+theorem lamForgetFinset_empty : lamForgetFinset A (∅ : Finset (LamToken A)) = ∅ :=
+  rfl
+
+theorem lamForgetFinset_singleton (p : LamToken A) :
+    lamForgetFinset A {p} = {p.val} := by
+  ext t
+  constructor
+  · intro ht
+    rcases (mem_lamForgetFinset A).1 ht with ⟨q, hq, hq'⟩
+    have : q = p := Finset.mem_singleton.mp hq
+    subst this; exact Finset.mem_singleton.mpr hq'.symm
+  · intro ht
+    exact (mem_lamForgetFinset A).2
+      ⟨p, Finset.mem_singleton_self p, (Finset.mem_singleton.mp ht).symm⟩
+
+theorem lamAtomFinset_singleton_funTok (u v : List (RawLamToken α)) :
+    lamAtomFinset ({.funTok u v} : Finset (RawLamToken α)) = ∅ := by
+  ext x
+  constructor
+  · intro hx; exact False.elim (nomatch mem_lamAtomFinset.1 hx)
+  · intro hx; exact False.elim (Finset.notMem_empty x hx)
+
+theorem lamFunFinset_singleton_funTok (u v : List (RawLamToken α)) :
+    lamFunFinset ({.funTok u v} : Finset (RawLamToken α)) = {(u, v)} := by
+  ext p
+  simp only [mem_lamFunFinset, Finset.mem_singleton]
+  constructor
+  · intro h
+    exact Prod.ext (RawLamToken.funTok.inj h).1 (RawLamToken.funTok.inj h).2
+  · intro h
+    cases h
+    rfl
+
+theorem lamInputUnion_singleton (p : List (RawLamToken α) × List (RawLamToken α)) :
+    lamInputUnion ({p} : Finset (List (RawLamToken α) × List (RawLamToken α))) =
+      listToFinset p.1 := by
+  ext t
+  change t ∈ listToFinset p.1 ∪' ∅ ↔ t ∈ listToFinset p.1
+  simp only [mem_funion, Finset.notMem_empty, or_false]
+
+theorem lamOutputUnion_singleton (p : List (RawLamToken α) × List (RawLamToken α)) :
+    lamOutputUnion ({p} : Finset (List (RawLamToken α) × List (RawLamToken α))) =
+      listToFinset p.2 := by
+  ext t
+  change t ∈ listToFinset p.2 ∪' ∅ ↔ t ∈ listToFinset p.2
+  simp only [mem_funion, Finset.notMem_empty, or_false]
+
+theorem LamConN_empty (n : ℕ) : LamConN A n (∅ : Finset (RawLamToken α)) := by
+  induction n with
+  | zero =>
+    change lamAtomFinset ∅ ∈ A.Con ∧ lamFunFinset ∅ = ∅
+    rw [lamAtomFinset_empty, lamFunFinset_empty]
+    exact ⟨A.con_empty, rfl⟩
+  | succ n ih => exact Or.inl ih
+
+theorem LamCon_singleton_funTok (u v : List (RawLamToken α))
+    (hu : LamCon A (listToFinset u)) (hv : LamCon A (listToFinset v)) :
+    LamCon A ({.funTok u v} : Finset (RawLamToken α)) := by
+  rcases hu with ⟨n, hu⟩
+  rcases hv with ⟨m, hv⟩
+  let k := max n m
+  refine ⟨k + 1, Or.inr ⟨?_, ?_, ?_⟩⟩
+  · exact lamAtomFinset_singleton_funTok u v
+  · intro p hp
+    have : p = (u, v) := by
+      have h := Finset.mem_singleton.mp (by
+        rw [← lamFunFinset_singleton_funTok u v]; exact hp)
+      exact h
+    subst this
+    exact ⟨LamConN_mono A (Nat.le_max_left n m) hu,
+      LamConN_mono A (Nat.le_max_right n m) hv⟩
+  · intro s hs hIn
+    have hFun : lamFunFinset ({.funTok u v} : Finset (RawLamToken α)) = {(u, v)} :=
+      lamFunFinset_singleton_funTok u v
+    rw [hFun] at hs
+    if hmem : (u, v) ∈ s then
+      have hsin : s = {(u, v)} := by
+        ext p
+        constructor
+        · intro hp
+          exact Finset.mem_singleton.mpr (Finset.mem_singleton.mp (hs hp))
+        · intro hp
+          have : p = (u, v) := Finset.mem_singleton.mp hp
+          subst this; exact hmem
+      subst hsin
+      rw [lamOutputUnion_singleton]
+      exact LamConN_mono A (Nat.le_max_right n m) hv
+    else
+      have hempty : s = ∅ := by
+        ext p
+        constructor
+        · intro hp
+          exact False.elim (hmem (by
+            have : p = (u, v) := Finset.mem_singleton.mp (hs hp)
+            subst this; exact hp))
+        · intro hp
+          exact False.elim (Finset.notMem_empty p hp)
+      subst hempty
+      exact LamConN_empty A k
+
+theorem LamCon_of_forget_singleton (p : LamToken A) :
+    LamCon A (lamForgetFinset A {p}) := by
+  rw [lamForgetFinset_singleton]
+  match p with
+  | ⟨.bot, _⟩ => exact LamCon_singleton_bot A
+  | ⟨.atom x, _⟩ => exact LamCon_singleton_atom A x
+  | ⟨.funTok u v, hWF⟩ => exact LamCon_singleton_funTok A u v hWF.1 hWF.2
+
+/-- Bundled consistency on `LamToken` finsets. -/
+def LamTokenCon (u : Finset (LamToken A)) : Prop :=
+  LamCon A (lamForgetFinset A u)
+
+theorem LamTokenCon_empty : LamTokenCon A (∅ : Finset (LamToken A)) := by
+  simpa [LamTokenCon, lamForgetFinset_empty] using LamCon_empty A
+
+theorem LamTokenCon_singleton (p : LamToken A) : LamTokenCon A {p} :=
+  LamCon_of_forget_singleton A p
+
+theorem LamTokenCon_subset {u v : Finset (LamToken A)}
+    (hu : LamTokenCon A u) (hv : v ⊆ u) : LamTokenCon A v :=
+  LamCon_subset A hu (by
+    intro t ht
+    rcases (mem_lamForgetFinset A).1 ht with ⟨p, hp, rfl⟩
+    exact (mem_lamForgetFinset A).2 ⟨p, hv hp, rfl⟩)
+
+/-! ## Staged entailment (Scott (8)–(11)) — definitions only
+
+Full `ent_refl` / `ent_con` / `ent_trans` for the `InfoSys` instance remain; the
+definitions below package Scott’s clauses (8)–(11) at stages matching `LamConN`.
+-/
+
+/-- Stage-`n` entailment on raw tokens (Scott (8)–(11), stratified). -/
+def LamEntN : ℕ → Finset (RawLamToken α) → RawLamToken α → Prop
+  | 0, u, .bot => LamConN A 0 u
+  | 0, u, .atom x =>
+      LamConN A 0 u ∧ lamAtomFinset u ≠ ∅ ∧ A.Ent (lamAtomFinset u) x
+  | 0, _, .funTok _ _ => False
+  | n + 1, u, t =>
+      LamEntN n u t ∨
+        match t with
+        | .bot => LamConN A (n + 1) u
+        | .atom x =>
+            LamConN A (n + 1) u ∧ lamFunFinset u = ∅ ∧
+              lamAtomFinset u ≠ ∅ ∧ A.Ent (lamAtomFinset u) x
+        | .funTok u' v' =>
+            LamConN A (n + 1) u ∧ lamAtomFinset u = ∅ ∧
+              ∃ s ⊆ lamFunFinset u,
+                (∀ p ∈ s, ∀ t ∈ listToFinset p.1, LamEntN n (listToFinset u') t) ∧
+                  (∀ t ∈ listToFinset v', LamEntN n (lamOutputUnion s) t)
+
+/-- Unstaged raw entailment. -/
+def LamEnt (u : Finset (RawLamToken α)) (t : RawLamToken α) : Prop :=
+  ∃ n, LamEntN A n u t
+
+theorem LamEntN_mono {n m : ℕ} (hmn : n ≤ m) {u : Finset (RawLamToken α)}
+    {t : RawLamToken α} (ht : LamEntN A n u t) : LamEntN A m u t := by
+  induction hmn with
+  | refl => exact ht
+  | step _ ih => exact Or.inl ih
+
+theorem LamEnt_bot {u : Finset (RawLamToken α)} (hu : LamCon A u) :
+    LamEnt A u .bot := by
+  rcases hu with ⟨n, hu⟩
+  cases n with
+  | zero => exact ⟨0, hu⟩
+  | succ n => exact ⟨n + 1, Or.inr hu⟩
+
+theorem LamEntN_con {n : ℕ} {u : Finset (RawLamToken α)} {t : RawLamToken α}
+    (ht : LamEntN A n u t) : LamConN A n u := by
+  match n, t with
+  | 0, .bot => exact ht
+  | 0, .atom _ => exact ht.1
+  | 0, .funTok _ _ => exact False.elim ht
+  | n + 1, t =>
+    rcases ht with ht | ht
+    · exact Or.inl (LamEntN_con (n := n) ht)
+    · match t with
+      | .bot => exact ht
+      | .atom _ => exact ht.1
+      | .funTok _ _ => exact ht.1
+
+theorem LamEnt_con {u : Finset (RawLamToken α)} {t : RawLamToken α}
+    (ht : LamEnt A u t) : LamCon A u := by
+  rcases ht with ⟨n, ht⟩
+  exact ⟨n, LamEntN_con A ht⟩
+
+/-- Bundled entailment on `LamToken`. -/
+def LamTokenEnt (u : Finset (LamToken A)) (p : LamToken A) : Prop :=
+  LamEnt A (lamForgetFinset A u) p.val
+
+theorem LamTokenEnt_bot {u : Finset (LamToken A)} (hu : LamTokenCon A u) :
+    LamTokenEnt A u (lamBot A) :=
+  LamEnt_bot A hu
+
+/-- Consistency and bottom-entailment fragments of Def 2.1 for the λ-model. -/
+theorem lambdaSystem_con_axioms :
+    (∀ {u v : Finset (LamToken A)}, LamTokenCon A u → v ⊆ u → LamTokenCon A v) ∧
+      (∀ p : LamToken A, LamTokenCon A {p}) ∧
+        (∀ {u : Finset (LamToken A)}, LamTokenCon A u → LamTokenEnt A u (lamBot A)) :=
+  ⟨fun hu hv => LamTokenCon_subset A hu hv,
+    LamTokenCon_singleton A,
+    fun hu => LamTokenEnt_bot A hu⟩
+
+end InfoSys
+
+end Scott1982

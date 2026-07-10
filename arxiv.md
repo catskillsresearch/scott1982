@@ -646,7 +646,7 @@ flowchart LR
   P62["Proposition 6.2<br/><i>Product</i>"]
   P64["Proposition 6.4<br/><i>Sum</i>"]
   F81["Factoid 8.1<br/><i>Factoid81.lean — trees</i>"]
-  F82["Factoid 8.2<br/>λ-model D ≅ A + (D → D)"]
+  F82["Factoid 8.2<br/><i>Factoid82.lean — λ-model (Partial)</i>"]
   F83["Factoid 8.3<br/>universal V / U"]
   F84["Factoid 8.4<br/>domain of domains"]
   P62 --> F81
@@ -666,7 +666,13 @@ flowchart LR
 #### Factoid 8.2
 * **Mathematical Target:** λ-calculus model `D ≅ A + (D → D)` via mutual recursion of `D` and `Con`.
 * **Lean File:** `Scott1982/Factoid82.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Partial** — nested `RawLamToken` (bot/atom/funTok); staged `LamConN` /
+  `LamEntN` (Scott (4)–(11)) because FunCon-style clause (7) is non-positive in an
+  inductive; well-formed `LamToken` subtype; Def 2.1 fragments `con_subset` /
+  `con_sing` / `ent_bot` via `LamTokenCon` / `LamTokenEnt`. Full `InfoSys`
+  (`ent_refl` / `ent_con` / `ent_trans` on funTok) and unfold into
+  `sumSystem A (functionSystem D D)` remain. Axioms of proved lemmas ⊆
+  `{propext, Quot.sound}`.
 
 #### Factoid 8.3
 * **Mathematical Target:** Universal domain remarks (`V`, retract `U`).

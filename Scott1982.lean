@@ -29,4 +29,5 @@ import Scott1982.Factoid75
 import Scott1982.Factoid76
 import Scott1982.Factoid77
 import Scott1982.Factoid81
+import Scott1982.Factoid82
 import Scott1982.DomainEquation
