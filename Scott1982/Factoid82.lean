@@ -1434,6 +1434,131 @@ theorem LamEntDepth_weaken_atom {u v : Finset (RawLamToken α)} {x : α}
         (fun y hy => A.ent_refl ((LamConDepth_of_fun_empty A hFv).1 hv) (hsubA hy))
         hEnt)
 
+/-! ### Funion / filter helpers + weaken_insert + funion_of_entSet + insert_of_ent -/
+
+private theorem funion_empty_right_lam (u : Finset (RawLamToken α)) :
+    u ∪' (∅ : Finset (RawLamToken α)) = u := by
+  ext x; simp only [mem_funion, Finset.notMem_empty, or_false]
+
+private theorem funion_insert_lam (u : Finset (RawLamToken α)) (a : RawLamToken α)
+    (t : Finset (RawLamToken α)) : u ∪' insert a t = insert a (u ∪' t) := by
+  ext x
+  constructor
+  · intro hx
+    rcases mem_funion.mp hx with hu | hins
+    · exact Finset.mem_insert_of_mem (mem_funion.mpr (Or.inl hu))
+    · rcases Finset.mem_insert.mp hins with ha | ht
+      · exact Finset.mem_insert.mpr (Or.inl ha)
+      · exact Finset.mem_insert_of_mem (mem_funion.mpr (Or.inr ht))
+  · intro hx
+    rcases Finset.mem_insert.mp hx with ha | h
+    · exact mem_funion.mpr (Or.inr (Finset.mem_insert.mpr (Or.inl ha)))
+    · rcases mem_funion.mp h with hu | ht
+      · exact mem_funion.mpr (Or.inl hu)
+      · exact mem_funion.mpr (Or.inr (Finset.mem_insert.mpr (Or.inr ht)))
+
+private theorem insert_filter_ne_lam
+    {p : List (RawLamToken α) × List (RawLamToken α)}
+    {t : Finset (List (RawLamToken α) × List (RawLamToken α))}
+    (hp : p ∈ t) : insert p (t.filter (· ≠ p)) = t := by
+  ext q
+  constructor
+  · intro hq
+    rcases Finset.mem_insert.mp hq with rfl | hq
+    · exact hp
+    · exact (Finset.mem_filter.mp hq).1
+  · intro hq
+    if h : q = p then
+      exact Finset.mem_insert.mpr (Or.inl h)
+    else
+      exact Finset.mem_insert.mpr (Or.inr (Finset.mem_filter.mpr ⟨hq, h⟩))
+
+private theorem filter_ne_subset_of_subset_insert_lam
+    {p : List (RawLamToken α) × List (RawLamToken α)}
+    {t w : Finset (List (RawLamToken α) × List (RawLamToken α))}
+    (ht : t ⊆ insert p w) : t.filter (· ≠ p) ⊆ w := by
+  intro q hq
+  have ⟨hqt, hne⟩ := Finset.mem_filter.mp hq
+  have : q ∈ insert p w := ht hqt
+  rcases Finset.mem_insert.mp this with rfl | hqW
+  · exact False.elim (hne rfl)
+  · exact hqW
+
+theorem lamAtomFinset_funion (u v : Finset (RawLamToken α)) :
+    lamAtomFinset (u ∪' v) = lamAtomFinset u ∪' lamAtomFinset v := by
+  ext x
+  constructor
+  · intro hx
+    have : .atom x ∈ u ∪' v := mem_lamAtomFinset.1 hx
+    rcases mem_funion.1 this with hu | hv
+    · exact mem_funion.2 (Or.inl (mem_lamAtomFinset.2 hu))
+    · exact mem_funion.2 (Or.inr (mem_lamAtomFinset.2 hv))
+  · intro hx
+    rcases mem_funion.1 hx with hu | hv
+    · exact mem_lamAtomFinset.2 (mem_funion.2 (Or.inl (mem_lamAtomFinset.1 hu)))
+    · exact mem_lamAtomFinset.2 (mem_funion.2 (Or.inr (mem_lamAtomFinset.1 hv)))
+
+theorem lamFunFinset_funion (u v : Finset (RawLamToken α)) :
+    lamFunFinset (u ∪' v) = lamFunFinset u ∪' lamFunFinset v := by
+  ext p
+  constructor
+  · intro hp
+    have : .funTok p.1 p.2 ∈ u ∪' v := mem_lamFunFinset.1 hp
+    rcases mem_funion.1 this with hu | hv
+    · exact mem_funion.2 (Or.inl (mem_lamFunFinset.2 hu))
+    · exact mem_funion.2 (Or.inr (mem_lamFunFinset.2 hv))
+  · intro hp
+    rcases mem_funion.1 hp with hu | hv
+    · exact mem_lamFunFinset.2 (mem_funion.2 (Or.inl (mem_lamFunFinset.1 hu)))
+    · exact mem_lamFunFinset.2 (mem_funion.2 (Or.inr (mem_lamFunFinset.1 hv)))
+
+/-- Weaken Ent across inserting another token entailed by the same set. -/
+theorem LamEntDepth_weaken_insert {u : Finset (RawLamToken α)}
+    {a x : RawLamToken α}
+    (hu' : LamConDepth A (insert a u))
+    (hx : LamEntDepth A u x) (ha : LamEntDepth A u a) :
+    LamEntDepth A (insert a u) x := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  have huv : u ⊆ insert a u := Finset.subset_insert a u
+  match x with
+  | .bot => exact LamEntDepth.bot hu'
+  | .atom z =>
+    cases decidableEq_finset (lamFunFinset (insert a u)) ∅ with
+    | isTrue hF =>
+      exact LamEntDepth_weaken_atom A huv hu' hF hx
+    | isFalse hF =>
+      have hAt := ((LamConDepth_of_fun_nonempty A hF).1 hu').1
+      cases hx with
+      | atom _ _ hne _ =>
+        obtain ⟨y, hy⟩ := Finset.nonempty_of_ne_empty hne
+        exact False.elim (Finset.notMem_empty y (by
+          have := lamAtomFinset_mono huv hy; rwa [hAt] at this))
+  | .funTok xs ys =>
+    cases decidableEq_finset (lamFunFinset (insert a u)) ∅ with
+    | isFalse hF =>
+      have hAv := ((LamConDepth_of_fun_nonempty A hF).1 hu').1
+      exact LamEntDepth_weaken_fun A huv hu' hAv hx
+    | isTrue hF =>
+      cases ha with
+      | bot _ =>
+        cases hx with
+        | funTok hu hA hConIn hConOut hs hEntIn hEntOut =>
+          have hAv : lamAtomFinset (insert (.bot : RawLamToken α) u) = ∅ := by
+            rw [lamAtomFinset_insert_bot]; exact hA
+          exact LamEntDepth.funTok hu' hAv hConIn hConOut
+            (by rw [lamFunFinset_insert_bot]; exact hs) hEntIn hEntOut
+      | atom _ _ hne _ =>
+        cases hx with
+        | funTok _ hA _ _ _ _ _ =>
+          obtain ⟨y, hy⟩ := Finset.nonempty_of_ne_empty hne
+          exact False.elim (Finset.notMem_empty y (by rwa [hA] at hy))
+      | funTok _ _ _ _ _ _ _ =>
+        -- `a` refined to funTok, so fun (insert a u) ≠ ∅, contradicting hF
+        simp only [lamFunFinset_insert_funTok] at hF
+        exact False.elim (Finset.notMem_empty _ (hF ▸ Finset.mem_insert_self _ _))
+
+
 end InfoSys
 
 end Scott1982
