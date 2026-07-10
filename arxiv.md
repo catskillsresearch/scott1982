@@ -297,7 +297,7 @@ Informal section; elevated claims are Factoids. Lean dependencies provisional.
 
 ```mermaid
 flowchart TD
-  F41["Factoid 4.1<br/>inf-semilattice"]
+  F41["Factoid 4.1<br/><i>Factoid41.lean</i>"]
   F42["Factoid 4.2<br/>conditional complete meets"]
   F43["Factoid 4.3<br/>consistent joins"]
   F44["Factoid 4.4<br/>chain / directed lubs"]
@@ -311,7 +311,8 @@ flowchart TD
 #### Factoid 4.1
 * **Mathematical Target:** `|A|` is an inf-semilattice under `∩`; `x ⊆ y ↔ x ∩ y = x`.
 * **Lean File:** `Scott1982/Factoid41.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `inf` via carrier `∩`; `inf_le_left`/`right`, `le_inf`, `le_iff_inf_eq`;
+  idempotent/commutative/associative; `botElement_inf`. No `sorry`.
 
 #### Factoid 4.2
 * **Mathematical Target:** Nonempty families of elements have set-theoretic intersections that are elements.
@@ -557,6 +558,7 @@ this file.
 | `Scott1982/Factoid34.lean` | top / Tot |
 | `Scott1982/Factoid35.lean` | finite closure `ū` |
 | `Scott1982/Factoid36.lean` | `x = ⋃{ū ∣ u ⊆ x}` |
+| `Scott1982/Factoid41.lean` | inf-semilattice under `∩` |
 | `Scott1982/Approximable.lean` | Def 5.1–5.2 |
 | `Scott1982/Proposition54.lean` | identity map |
 | `Scott1982/Proposition55.lean` | composition |
