@@ -648,7 +648,7 @@ flowchart LR
   F81["Factoid 8.1<br/><i>Factoid81.lean — trees</i>"]
   F82["Factoid 8.2<br/><i>Factoid82.lean — λ-model</i>"]
   F83["Factoid 8.3<br/><i>Factoid83.lean — universal V / U</i>"]
-  F84["Factoid 8.4<br/>domain of domains"]
+  F84["Factoid 8.4<br/><i>Factoid84.lean — domain of domains</i>"]
   P62 --> F81
   P64 --> F81
   F81 --> F82 --> F83 --> F84
@@ -688,7 +688,14 @@ flowchart LR
 #### Factoid 8.4
 * **Mathematical Target:** Domain of domains via approximable maps on `P` satisfying (1)–(5).
 * **Lean File:** `Scott1982/Factoid84.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** (Scott’s sketch, as far as stated) — powerset InfoSys
+  **`P`** on `ℕ` (`0 = Δ`, all finite sets Con, minimal Ent); Scott’s (1)–(5) as
+  `ReflApprox` / `IdemApprox` / `BotApprox` / `RogueApprox` / `ConsistentApprox` on
+  `ApproximableMap P P`; package **`DomainApprox`**; consistency remark
+  `scottCon`; inhabitant `flatDomainApprox` (`1` as rogue); `I_P` fails (4).
+  Token-level InfoSys for the domain of domains (U-from-V style on `P → P`) and
+  functors/powerdomains are deferred with Scott. Axioms ⊆ `{propext, Quot.sound}`.
+  No `sorry`.
 
 ---
 
