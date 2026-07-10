@@ -666,14 +666,11 @@ flowchart LR
 #### Factoid 8.2
 * **Mathematical Target:** λ-calculus model `D ≅ A + (D → D)` via mutual recursion of `D` and `Con`.
 * **Lean File:** `Scott1982/Factoid82.lean`
-* **Proof Notes:** **Partial** — nested `RawLamToken` (bot/atom/funTok); staged `LamConN` /
-  `LamEntN` (Scott (4)–(11)) because FunCon-style clause (7) is non-positive in an
-  inductive; well-formed `LamToken` subtype; Def 2.1 `con_subset` / `con_sing` /
-  `ent_bot` / **`ent_refl`** (`LamEntN_of_mem`); `ent_con` for bot/atom; FunCon
-  infrastructure (`LamConN_exists_FunCon`, `LamConN_down_atom`,
-  `LamConN_fun_FunCon_atom`) for the function side. Remaining: full `ent_con` on
-  `funTok` (filter-ne / nested fun-inputs), `ent_trans`, `lambdaSystem`, unfold into
-  `sumSystem A (functionSystem D D)`. Axioms ⊆ `{propext, Quot.sound}`.
+* **Proof Notes:** **Partial** — nested `RawLamToken`; staged `LamConN`/`LamEntN` with
+  `ent_refl` and bot/atom `ent_con`; **depth measure** (`rawDepth`/`finsetMaxDepth`) and
+  well-founded **`LamConDepth`** (FunCon-positive via `termination_by`, Scott’s complexity
+  stratification). Next: migrate Def 2.1 axioms onto `LamConDepth`, then `ent_trans` /
+  `lambdaSystem` / unfold. Axioms ⊆ `{propext, Quot.sound}`.
 
 #### Factoid 8.3
 * **Mathematical Target:** Universal domain remarks (`V`, retract `U`).

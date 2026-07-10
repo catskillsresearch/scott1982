@@ -13,7 +13,7 @@ tokens whose components and FunCon checks live at stage `n`. Then
 
 **Status:** `RawLamToken` / `LamToken`; staged `LamCon` / `LamEnt`; Def 2.1
 `con_subset`, `con_sing`, `ent_bot`, **`ent_refl`** (`LamTokenEnt_of_mem`);
-`ent_con` for bot/atom. Remaining: `ent_con` / `ent_trans` on `funTok`, full
+`ent_con` for bot/atom; depth measure + experimental `LamConDepth` (wf). Remaining: migrate axioms to depth Con, `ent_trans`, full
 `lambdaSystem`, unfold into `sumSystem A (functionSystem D D)`.
 -/
 
@@ -978,6 +978,203 @@ theorem lambdaSystem_con_axioms :
     LamTokenCon_singleton A,
     fun hu => LamTokenEnt_bot A hu,
     fun hu hp => LamTokenEnt_of_mem A hu hp⟩
+
+
+/-! ## Depth measure (for well-founded Con) -/
+
+private theorem max_le_max_nat {a b c d : ℕ} (h1 : a ≤ c) (h2 : b ≤ d) :
+    max a b ≤ max c d :=
+  max_le (le_trans h1 (le_max_left _ _)) (le_trans h2 (le_max_right _ _))
+
+
+def rawDepth : RawLamToken α → ℕ
+  | .bot | .atom _ => 0
+  | .funTok u v =>
+      1 + Nat.max
+        (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 u)
+        (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 v)
+
+theorem foldl_max_mono_init {u : List (RawLamToken α)} {i j : ℕ} (hij : i ≤ j) :
+    List.foldl (fun d t => Nat.max d (rawDepth t)) i u ≤
+      List.foldl (fun d t => Nat.max d (rawDepth t)) j u := by
+  induction u generalizing i j with
+  | nil => exact hij
+  | cons a as ih => exact ih (max_le_max_nat hij le_rfl)
+
+theorem foldl_max_ge_init (u : List (RawLamToken α)) (init : ℕ) :
+    init ≤ List.foldl (fun d t => Nat.max d (rawDepth t)) init u := by
+  induction u generalizing init with
+  | nil => exact le_rfl
+  | cons a as ih =>
+    exact Nat.le_trans (Nat.le_max_left init (rawDepth a)) (ih _)
+
+theorem foldl_list_le_of_mem {t : RawLamToken α} {u : List (RawLamToken α)}
+    (ht : t ∈ u) :
+    rawDepth t ≤ List.foldl (fun d t => Nat.max d (rawDepth t)) 0 u := by
+  induction u with
+  | nil => cases ht
+  | cons a as ih =>
+    simp only [List.mem_cons] at ht
+    rcases ht with rfl | ht
+    · exact Nat.le_trans (Nat.le_max_right 0 (rawDepth t))
+        (foldl_max_ge_init as (Nat.max 0 (rawDepth t)))
+    · exact Nat.le_trans (ih ht) (foldl_max_mono_init (Nat.zero_le _))
+
+theorem rawDepth_funTok_gt_left {u v : List (RawLamToken α)} {t : RawLamToken α}
+    (ht : t ∈ u) : rawDepth t < rawDepth (.funTok u v) := by
+  have h : rawDepth t ≤
+      Nat.max (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 u)
+        (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 v) :=
+    Nat.le_trans (foldl_list_le_of_mem ht) (Nat.le_max_left _ _)
+  simp only [rawDepth]
+  exact Nat.lt_of_le_of_lt h (Nat.lt_add_of_pos_left (Nat.succ_pos 0))
+
+theorem rawDepth_funTok_gt_right {u v : List (RawLamToken α)} {t : RawLamToken α}
+    (ht : t ∈ v) : rawDepth t < rawDepth (.funTok u v) := by
+  have h : rawDepth t ≤
+      Nat.max (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 u)
+        (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 v) :=
+    Nat.le_trans (foldl_list_le_of_mem ht) (Nat.le_max_right _ _)
+  simp only [rawDepth]
+  exact Nat.lt_of_le_of_lt h (Nat.lt_add_of_pos_left (Nat.succ_pos 0))
+
+private def maxDepthInsert : RawLamToken α → ℕ → ℕ :=
+  fun t d => Nat.max (rawDepth t) d
+
+private instance : LeftCommutative (maxDepthInsert (α := α)) :=
+  ⟨fun a b d => by simp only [maxDepthInsert]; exact Nat.max_left_comm _ _ _⟩
+
+def finsetMaxDepth (u : Finset (RawLamToken α)) : ℕ :=
+  Multiset.foldr (maxDepthInsert (α := α)) 0 u.1
+
+theorem le_finsetMaxDepth_of_mem {u : Finset (RawLamToken α)} {t : RawLamToken α}
+    (ht : t ∈ u) : rawDepth t ≤ finsetMaxDepth u := by
+  simp only [finsetMaxDepth]
+  have ht' : t ∈ u.1 := Finset.mem_def.1 ht
+  revert ht'
+  refine Multiset.induction_on u.1 ?_ ?_
+  · intro ht'; cases ht'
+  · intro a s ih ht'
+    simp only [Multiset.mem_cons] at ht'
+    simp only [Multiset.foldr_cons, maxDepthInsert]
+    rcases ht' with rfl | ht'
+    · exact Nat.le_max_left _ _
+    · exact Nat.le_trans (ih ht') (Nat.le_max_right _ _)
+
+theorem foldr_max_le_of_forall {s : Multiset (RawLamToken α)} {b : ℕ}
+    (h : ∀ t ∈ s, rawDepth t ≤ b) :
+    Multiset.foldr (maxDepthInsert (α := α)) 0 s ≤ b := by
+  revert h
+  refine Multiset.induction_on s ?_ ?_
+  · intro; exact Nat.zero_le _
+  · intro a s ih h
+    simp only [Multiset.foldr_cons, maxDepthInsert]
+    exact Nat.max_le.2 ⟨h a (Multiset.mem_cons_self _ _),
+      ih fun t ht => h t (Multiset.mem_cons_of_mem ht)⟩
+
+theorem foldr_max_lt_of_forall {s : Multiset (RawLamToken α)} {b : ℕ}
+    (hb : 0 < b) (h : ∀ t ∈ s, rawDepth t < b) :
+    Multiset.foldr (maxDepthInsert (α := α)) 0 s < b := by
+  revert h
+  refine Multiset.induction_on s ?_ ?_
+  · intro; exact hb
+  · intro a s ih h
+    simp only [Multiset.foldr_cons, maxDepthInsert]
+    exact Nat.max_lt.2 ⟨h a (Multiset.mem_cons_self _ _),
+      ih fun t ht => h t (Multiset.mem_cons_of_mem ht)⟩
+
+theorem finsetMaxDepth_listToFinset_le (u : List (RawLamToken α)) :
+    finsetMaxDepth (listToFinset u) ≤
+      List.foldl (fun d t => Nat.max d (rawDepth t)) 0 u := by
+  simp only [finsetMaxDepth]
+  exact foldr_max_le_of_forall fun t ht =>
+    foldl_list_le_of_mem ((mem_listToFinset).1 (Finset.mem_def.2 ht))
+
+theorem finsetMaxDepth_list_lt_funTok (u v : List (RawLamToken α)) :
+    finsetMaxDepth (listToFinset u) < rawDepth (.funTok u v) := by
+  have h1 := finsetMaxDepth_listToFinset_le u
+  have h2 : List.foldl (fun d t => Nat.max d (rawDepth t)) 0 u ≤
+      Nat.max (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 u)
+        (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 v) :=
+    Nat.le_max_left _ _
+  simp only [rawDepth]
+  exact Nat.lt_of_le_of_lt (Nat.le_trans h1 h2) (Nat.lt_add_of_pos_left (Nat.succ_pos 0))
+
+theorem finsetMaxDepth_list_lt_funTok_out (u v : List (RawLamToken α)) :
+    finsetMaxDepth (listToFinset v) < rawDepth (.funTok u v) := by
+  have h1 := finsetMaxDepth_listToFinset_le v
+  have h2 : List.foldl (fun d t => Nat.max d (rawDepth t)) 0 v ≤
+      Nat.max (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 u)
+        (List.foldl (fun d t => Nat.max d (rawDepth t)) 0 v) :=
+    Nat.le_max_right _ _
+  simp only [rawDepth]
+  exact Nat.lt_of_le_of_lt (Nat.le_trans h1 h2) (Nat.lt_add_of_pos_left (Nat.succ_pos 0))
+
+
+theorem finsetMaxDepth_of_mem_funTok {u : Finset (RawLamToken α)}
+    {xs ys : List (RawLamToken α)} (h : .funTok xs ys ∈ u) :
+    finsetMaxDepth (listToFinset xs) < finsetMaxDepth u ∧
+      finsetMaxDepth (listToFinset ys) < finsetMaxDepth u :=
+  ⟨Nat.lt_of_lt_of_le (finsetMaxDepth_list_lt_funTok xs ys) (le_finsetMaxDepth_of_mem h),
+    Nat.lt_of_lt_of_le (finsetMaxDepth_list_lt_funTok_out xs ys) (le_finsetMaxDepth_of_mem h)⟩
+
+theorem finsetMaxDepth_inputUnion_lt {u : Finset (RawLamToken α)}
+    {s : Finset (List (RawLamToken α) × List (RawLamToken α))}
+    (hs : s ⊆ lamFunFinset u) (hfun : lamFunFinset u ≠ ∅) :
+    finsetMaxDepth (lamInputUnion s) < finsetMaxDepth u := by
+  obtain ⟨p0, hp0⟩ := Finset.nonempty_of_ne_empty hfun
+  have htok0 : .funTok p0.1 p0.2 ∈ u := mem_lamFunFinset.1 hp0
+  have hpos : 0 < finsetMaxDepth u := by
+    have hraw : 0 < rawDepth (.funTok p0.1 p0.2) := by
+      simp only [rawDepth]
+      exact Nat.add_pos_left (Nat.succ_pos 0) _
+    exact Nat.lt_of_lt_of_le hraw (le_finsetMaxDepth_of_mem htok0)
+  refine foldr_max_lt_of_forall (s := (lamInputUnion s).1) hpos ?_
+  intro t ht
+  have ht' : t ∈ lamInputUnion s := Finset.mem_def.2 ht
+  rcases (mem_lamInputUnion).1 ht' with ⟨p, hp, htp⟩
+  have htok : .funTok p.1 p.2 ∈ u := mem_lamFunFinset.1 (hs hp)
+  exact Nat.lt_of_lt_of_le
+    (rawDepth_funTok_gt_left ((mem_listToFinset).1 htp))
+    (le_finsetMaxDepth_of_mem htok)
+
+theorem finsetMaxDepth_outputUnion_lt {u : Finset (RawLamToken α)}
+    {s : Finset (List (RawLamToken α) × List (RawLamToken α))}
+    (hs : s ⊆ lamFunFinset u) (hfun : lamFunFinset u ≠ ∅) :
+    finsetMaxDepth (lamOutputUnion s) < finsetMaxDepth u := by
+  obtain ⟨p0, hp0⟩ := Finset.nonempty_of_ne_empty hfun
+  have htok0 : .funTok p0.1 p0.2 ∈ u := mem_lamFunFinset.1 hp0
+  have hpos : 0 < finsetMaxDepth u := by
+    have hraw : 0 < rawDepth (.funTok p0.1 p0.2) := by
+      simp only [rawDepth]
+      exact Nat.add_pos_left (Nat.succ_pos 0) _
+    exact Nat.lt_of_lt_of_le hraw (le_finsetMaxDepth_of_mem htok0)
+  refine foldr_max_lt_of_forall (s := (lamOutputUnion s).1) hpos ?_
+  intro t ht
+  have ht' : t ∈ lamOutputUnion s := Finset.mem_def.2 ht
+  rcases (mem_lamOutputUnion).1 ht' with ⟨p, hp, htp⟩
+  have htok : .funTok p.1 p.2 ∈ u := mem_lamFunFinset.1 (hs hp)
+  exact Nat.lt_of_lt_of_le
+    (rawDepth_funTok_gt_right ((mem_listToFinset).1 htp))
+    (le_finsetMaxDepth_of_mem htok)
+
+/-- Depth-based consistency (experimental; staged `LamCon` remains primary for now). -/
+def LamConDepth (u : Finset (RawLamToken α)) : Prop :=
+  if hF : lamFunFinset u = ∅ then
+    lamAtomFinset u ∈ A.Con
+  else
+    lamAtomFinset u = ∅ ∧
+      (∀ p ∈ lamFunFinset u,
+        LamConDepth (listToFinset p.1) ∧ LamConDepth (listToFinset p.2)) ∧
+      (∀ s ⊆ lamFunFinset u,
+        LamConDepth (lamInputUnion s) → LamConDepth (lamOutputUnion s))
+termination_by finsetMaxDepth u
+decreasing_by
+  · exact (finsetMaxDepth_of_mem_funTok (mem_lamFunFinset.1 ‹_›)).1
+  · exact (finsetMaxDepth_of_mem_funTok (mem_lamFunFinset.1 ‹_›)).2
+  · exact finsetMaxDepth_inputUnion_lt ‹_› hF
+  · exact finsetMaxDepth_outputUnion_lt ‹_› hF
+
 
 end InfoSys
 
