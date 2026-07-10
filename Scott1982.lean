@@ -22,5 +22,6 @@ import Scott1982.Sum
 import Scott1982.Proposition64
 import Scott1982.Factoid65
 import Scott1982.FunctionSpace
+import Scott1982.Factoid77
 import Scott1982.Fixpoint
 import Scott1982.DomainEquation

@@ -49,7 +49,7 @@ flowchart TB
   S4["§4 Lattices & topology<br/><i>factoids 4.x</i>"]
   S5["§5 Approximable mappings<br/><i>Def 5.1–5.2, Prop 5.3–5.6</i>"]
   S6["§6 Products & sums<br/><i>Def 6.1/6.3, Prop 6.2/6.4, Factoid 6.5</i>"]
-  S7["§7 Function space<br/><i>Def 7.1, Thm 7.2–7.3, Prop 7.4</i>"]
+  S7["§7 Function space<br/><i>Def 7.1, Thm 7.2–7.3, Prop 7.4, Factoids 7.5–7.7</i>"]
   S8["§8 Domain equations<br/><i>factoids 8.x</i>"]
 
   S1 -.-> S2
@@ -468,16 +468,17 @@ flowchart TD
   P23 --> D63
   D63 --> P64
   Ap --> P64
+  F33 --> P64
   P56 --> F65
   F33 --> F65
 ```
 
 `Product.lean` (Def 6.1 / `productSystem`) imports `Constructive` and `Proposition23`.
-`Proposition62.lean` adds approximable `fst`/`snd`/`⟨f,g⟩` on top of `Approximable` /
+`Proposition62.lean` adds approximable `fst`/`snd`/`⟨f,g⟩` on top of `Product` /
 Prop 5.3–5.5. `Sum.lean` (Def 6.3 / `sumSystem`) is parallel to `Product.lean`;
-`Proposition64.lean` adds `inl`/`inr`/`[f,g]`. `Factoid65.lean` (unit domain) imports
-Prop 5.6 (`constMap`) and Factoid 3.3 (`⊥`); Scott places it after the product remarks,
-before the sum construction.
+`Proposition64.lean` adds `inl`/`inr`/`[f,g]` (also Factoid 3.3 for `⊥` on copairing).
+`Factoid65.lean` (unit domain) imports Prop 5.6 (`constMap`) and Factoid 3.3 (`⊥`);
+Scott places it after the product remarks, before the sum construction.
 
 #### Definition 6.1
 * **Mathematical Target:** Product information system `A × B` on tagged tokens.
@@ -526,12 +527,15 @@ flowchart TD
   D61["Definition 6.1<br/><i>Product.lean</i>"]
   P62["Proposition 6.2<br/><i>Proposition62.lean</i>"]
   P56["Proposition 5.6<br/><i>Proposition56.lean</i>"]
+  F65["Factoid 6.5<br/><i>Factoid65.lean</i>"]
   D71["Definition 7.1<br/><i>FunctionSpace.lean</i>"]
   T72["Theorem 7.2<br/><i>Theorem72.lean</i>"]
   T73["Theorem 7.3<br/><i>Fixpoint.lean</i>"]
   P74["Proposition 7.4<br/><i>Proposition74.lean</i>"]
   F75["Factoid 7.5<br/><i>Factoid75.lean</i>"]
   F76["Factoid 7.6<br/><i>Factoid76.lean</i>"]
+  F77["Factoid 7.7<br/><i>Factoid77.lean — CCC stretch</i>"]
+  CT["Mathlib CategoryTheory<br/><i>stretch dependency</i>"]
   C --> D71
   P23 --> D71
   D71 --> T72
@@ -545,12 +549,16 @@ flowchart TD
   T72 --> F76
   P56 --> F76
   P62 --> F76
+  T72 --> F77
+  F65 --> F77
+  CT --> F77
 ```
 
 `FunctionSpace.lean` (Def 7.1 / `functionSystem`) imports `Constructive` and
 `Proposition23` only. Theorem 7.2 needs approximable maps plus the product/pairing
 apparatus for `apply` / `curry`. Theorem 7.3 (`fix`) sits on the function space and
-approximable maps; Factoid 7.6 reuses `const` and `pair` as operators.
+approximable maps; Factoid 7.6 reuses `const` and `pair` as operators. Factoid 7.7
+packages Scott’s CCC remark as a stretch goal using `Mathlib.CategoryTheory`.
 
 #### Definition 7.1
 * **Mathematical Target:** Function-space information system `A → B` with Scott's `Con`/`⊢` on pairs of consistent sets.
@@ -561,7 +569,7 @@ approximable maps; Factoid 7.6 reuses `const` and `pair` as operators.
   `{propext, Quot.sound}`. No `sorry`.
 
 #### Theorem 7.2
-* **Mathematical Target:** Elements of `|A → B|` = approximable maps; `apply` and `curry` (CCC).
+* **Mathematical Target:** Elements of `|A → B|` = approximable maps; `apply` and `curry`.
 * **Lean File:** `Scott1982/Theorem72.lean`
 * **Proof Notes:** **Not Yet** — `functionSystem` (InfoSys axioms) is Def 7.1 / `FunctionSpace.lean`.
 
@@ -584,6 +592,15 @@ approximable maps; Factoid 7.6 reuses `const` and `pair` as operators.
 * **Mathematical Target:** Combinators `const`, `pair`, `comp` as approximable operators.
 * **Lean File:** `Scott1982/Factoid76.lean`
 * **Proof Notes:** **Not Yet**
+
+#### Factoid 7.7
+* **Mathematical Target:** Scott’s CCC remark (*Categories again*): Props 6.2 and Theorem 7.2
+  (with unit `1` from Factoid 6.5) show the category of information systems and approximable
+  maps is cartesian closed.
+* **Lean File:** `Scott1982/Factoid77.lean`
+* **Proof Notes:** **Not Yet (stretch)** — after Theorem 7.2, package the concrete UP data as a
+  `Mathlib.CategoryTheory` `CartesianClosed` (or equivalent) instance. Intentionally uses
+  Lean’s category-theory library; not required for the constructive core.
 
 ---
 
