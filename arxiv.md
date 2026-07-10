@@ -646,7 +646,7 @@ flowchart LR
   P62["Proposition 6.2<br/><i>Product</i>"]
   P64["Proposition 6.4<br/><i>Sum</i>"]
   F81["Factoid 8.1<br/><i>Factoid81.lean — trees</i>"]
-  F82["Factoid 8.2<br/><i>Factoid82.lean — λ-model (Partial)</i>"]
+  F82["Factoid 8.2<br/><i>Factoid82.lean — λ-model</i>"]
   F83["Factoid 8.3<br/>universal V / U"]
   F84["Factoid 8.4<br/>domain of domains"]
   P62 --> F81
@@ -666,13 +666,13 @@ flowchart LR
 #### Factoid 8.2
 * **Mathematical Target:** λ-calculus model `D ≅ A + (D → D)` via mutual recursion of `D` and `Con`.
 * **Lean File:** `Scott1982/Factoid82.lean`
-* **Proof Notes:** **Partial** — choice-free well-founded **`LamConDepth`** / inductive
-  **`LamEntDepth`** (Scott (8)–(11)). Depth Def 2.1: `ent_refl`, **`ent_con`**
-  (`LamConDepth_insert_of_ent` for bot/atom/**funTok**, FunCon via filter-ne +
-  `funion_of_entSet`), world-safe Ent weaken, `hWorld`/`hInCompat` on funTok Ent
-  (blocks mixed-world FunCon gaps). Remaining: **`ent_trans`** (combined witness),
-  `lambdaSystem`, unfold into `sumSystem A (functionSystem D D)`. Axioms ⊆
-  `{propext, Quot.sound}`.
+* **Proof Notes:** **Pass** — choice-free well-founded **`LamConDepth`** / inductive
+  **`LamEntDepth`** (Scott (8)–(11)); Def 2.1 `ent_refl` / `ent_con` /
+  **`ent_trans`** (bot/atom + funTok via combined witness + depth IH);
+  `lambdaSystem : InfoSys (LamDToken A)` on depth-WF tokens; unfolding
+  `lamUnfold` / `lamRhs` into `sumSystem A (functionSystem (lambdaSystem A)
+  (lambdaSystem A))`. Staged `LamConN` retained as scaffolding. Axioms ⊆
+  `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 8.3
 * **Mathematical Target:** Universal domain remarks (`V`, retract `U`).

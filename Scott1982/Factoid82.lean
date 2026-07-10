@@ -3,19 +3,16 @@ import Scott1982.Sum
 import Mathlib.Data.Finset.Card
 
 /-!
-# Factoid 8.2 — λ-calculus model `D ≅ A + (D → D)` (Partial)
+# Factoid 8.2 — λ-calculus model `D ≅ A + (D → D)`
 
 **Scott 1982, §8.** `D` and `Con_D` are mutually recursive. Lean rejects putting the
-FunCon-style clause (7) inside an inductive (negative occurrence), so we **stage**
-consistency: `LamConN n` at stage `0` is atom/bot only; stage `n+1` may add function
-tokens whose components and FunCon checks live at stage `n`. Then
-`LamCon u := ∃ n, LamConN n u`. Entailment is staged the same way as `LamEntN`
-(Scott (8)–(11)).
+FunCon-style clause (7) inside an inductive (negative occurrence), so the primary
+path uses well-founded **`LamConDepth`** (`termination_by finsetMaxDepth`) and
+inductive **`LamEntDepth`** (Scott (8)–(11)). Staged `LamConN` / early `LamToken`
+remain scaffolding only.
 
-**Status:** Depth-based `LamConDepth` / `LamEntDepth` (wf; choice-free) is the
-primary path for Def 2.1. Staged `LamConN` retained as scaffolding. **`ent_con`**
-(`LamConDepth_insert_of_ent`, including funTok FunCon) is done. Remaining:
-`ent_trans`, `lambdaSystem`, unfold into `sumSystem A (functionSystem D D)`.
+**Status:** Def 2.1 packaged as `lambdaSystem` on `LamDToken` (depth WF); domain
+equation via `lamUnfold` / `lamRhs` into `sumSystem A (functionSystem D D)`.
 -/
 
 namespace Scott1982
@@ -1597,67 +1594,59 @@ theorem LamConDepth_funion_of_entSet (M : ℕ)
     LamConDepth A (u ∪' v) := by
   haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
     decidableEq_finset
-  suffices ∀ n u v, v.card = n → LamConDepth A u →
+  suffices ∀ (v u : Finset (RawLamToken α)),
+      LamConDepth A u →
       (∀ t ∈ v, LamEntDepth A u t) →
       (∀ t ∈ v, Nat.max (finsetMaxDepth u) (rawDepth t) < M) →
       LamConDepth A (u ∪' v) from
-    this v.card u v rfl hu hEnt hbound
-  intro n
-  induction n using Nat.strong_induction_on with
-  | h n ihCard =>
-    intro u v hc hu hEnt hbound
-    cases decidableEq_finset v ∅ with
-    | isTrue hv =>
-      subst hv; simpa [funion_empty_right_lam] using hu
-    | isFalse hv =>
-      obtain ⟨a, ha⟩ := Finset.nonempty_of_ne_empty hv
-      set t := v.erase a
-      have hv_eq : insert a t = v := Finset.insert_erase ha
-      have mem_a : a ∈ v := by rw [← hv_eq]; exact Finset.mem_insert_self a t
-      have han : Nat.max (finsetMaxDepth u) (rawDepth a) < M := hbound a mem_a
-      have hEnt_a : LamEntDepth A u a := hEnt a mem_a
-      have hu_ins : LamConDepth A (insert a u) := ihIns u a han hEnt_a
-      have hEnt_t : ∀ x ∈ t, LamEntDepth A (insert a u) x := by
-        intro x hx
-        have hxV : x ∈ v := by rw [← hv_eq]; exact Finset.mem_insert_of_mem hx
-        exact LamEntDepth_weaken_insert A hu_ins (hEnt x hxV) hEnt_a
-      have hbound_t : ∀ x ∈ t, Nat.max (finsetMaxDepth (insert a u)) (rawDepth x) < M := by
-        intro x hx
-        have hxV : x ∈ v := by rw [← hv_eq]; exact Finset.mem_insert_of_mem hx
-        have hxu : Nat.max (finsetMaxDepth u) (rawDepth x) < M := hbound x hxV
-        have hDi := finsetMaxDepth_insert_le u a
-        have h1 : Nat.max (finsetMaxDepth (insert a u)) (rawDepth x) ≤
-            Nat.max (Nat.max (rawDepth a) (finsetMaxDepth u)) (rawDepth x) :=
-          max_le_max_nat hDi le_rfl
-        refine Nat.lt_of_le_of_lt h1 ?_
-        have h2 : Nat.max (Nat.max (rawDepth a) (finsetMaxDepth u)) (rawDepth x) =
-            Nat.max (rawDepth a) (Nat.max (finsetMaxDepth u) (rawDepth x)) := by
-          ac_rfl
-        rw [h2]
-        exact Nat.max_lt.2 ⟨Nat.lt_of_le_of_lt (Nat.le_max_right _ _) han, hxu⟩
-      have hc_t : t.card < n := by
-        have : a ∉ t := Finset.notMem_erase a v
-        rw [← hc, ← hv_eq, Finset.card_insert_of_notMem this]
-        exact Nat.lt_succ_self _
-      have hunion : LamConDepth A (insert a u ∪' t) :=
-        ihCard t.card hc_t (insert a u) t rfl hu_ins hEnt_t hbound_t
-      have heq : insert a u ∪' t = u ∪' v := by
-        rw [← hv_eq]
-        ext x
-        constructor
-        · intro hx
-          rcases mem_funion.1 hx with h | h
-          · rcases Finset.mem_insert.mp h with rfl | hu'
-            · exact mem_funion.2 (Or.inr (Finset.mem_insert_self _ _))
-            · exact mem_funion.2 (Or.inl hu')
-          · exact mem_funion.2 (Or.inr (Finset.mem_insert_of_mem h))
-        · intro hx
-          rcases mem_funion.1 hx with hu' | h
-          · exact mem_funion.2 (Or.inl (Finset.mem_insert_of_mem hu'))
-          · rcases Finset.mem_insert.mp h with rfl | ht'
-            · exact mem_funion.2 (Or.inl (Finset.mem_insert_self _ _))
-            · exact mem_funion.2 (Or.inr ht')
-      rwa [heq] at hunion
+    this v u hu hEnt hbound
+  intro v
+  induction v using Finset.induction_on with
+  | empty =>
+    intro u hu _ _
+    simpa [funion_empty_right_lam] using hu
+  | insert a t ha ih =>
+    intro u hu hEnt hbound
+    have mem_a : a ∈ insert a t := Finset.mem_insert_self a t
+    have han : Nat.max (finsetMaxDepth u) (rawDepth a) < M := hbound a mem_a
+    have hEnt_a : LamEntDepth A u a := hEnt a mem_a
+    have hu_ins : LamConDepth A (insert a u) := ihIns u a han hEnt_a
+    have hEnt_t : ∀ x ∈ t, LamEntDepth A (insert a u) x := by
+      intro x hx
+      exact LamEntDepth_weaken_insert A hu_ins
+        (hEnt x (Finset.mem_insert_of_mem hx)) hEnt_a
+    have hbound_t : ∀ x ∈ t, Nat.max (finsetMaxDepth (insert a u)) (rawDepth x) < M := by
+      intro x hx
+      have hxu : Nat.max (finsetMaxDepth u) (rawDepth x) < M :=
+        hbound x (Finset.mem_insert_of_mem hx)
+      have hDi := finsetMaxDepth_insert_le u a
+      have h1 : Nat.max (finsetMaxDepth (insert a u)) (rawDepth x) ≤
+          Nat.max (Nat.max (rawDepth a) (finsetMaxDepth u)) (rawDepth x) :=
+        max_le_max_nat hDi le_rfl
+      refine Nat.lt_of_le_of_lt h1 ?_
+      have h2 : Nat.max (Nat.max (rawDepth a) (finsetMaxDepth u)) (rawDepth x) =
+          Nat.max (rawDepth a) (Nat.max (finsetMaxDepth u) (rawDepth x)) := by
+        ac_rfl
+      rw [h2]
+      exact Nat.max_lt.2 ⟨Nat.lt_of_le_of_lt (Nat.le_max_right _ _) han, hxu⟩
+    have hunion : LamConDepth A (insert a u ∪' t) :=
+      ih (insert a u) hu_ins hEnt_t hbound_t
+    have heq : insert a u ∪' t = u ∪' insert a t := by
+      ext x
+      constructor
+      · intro hx
+        rcases mem_funion.1 hx with h | h
+        · rcases Finset.mem_insert.mp h with rfl | hu'
+          · exact mem_funion.2 (Or.inr (Finset.mem_insert_self _ _))
+          · exact mem_funion.2 (Or.inl hu')
+        · exact mem_funion.2 (Or.inr (Finset.mem_insert_of_mem h))
+      · intro hx
+        rcases mem_funion.1 hx with hu' | h
+        · exact mem_funion.2 (Or.inl (Finset.mem_insert_of_mem hu'))
+        · rcases Finset.mem_insert.mp h with rfl | ht'
+          · exact mem_funion.2 (Or.inl (Finset.mem_insert_self _ _))
+          · exact mem_funion.2 (Or.inr ht')
+    rwa [heq] at hunion
 
 private theorem funion_assoc_lam (a b c : Finset (RawLamToken α)) :
     (a ∪' b) ∪' c = a ∪' (b ∪' c) := by
@@ -1913,12 +1902,498 @@ theorem LamConDepth_insert_of_ent {u : Finset (RawLamToken α)} {t : RawLamToken
 
 
 
-/-! ### Remaining: `LamEntDepth_trans` + `lambdaSystem`
+/-! ### Scott (8)–(11): `ent_trans` (Def 2.1) -/
 
-`LamConDepth_insert_of_ent` (full funTok FunCon via filter-ne) is complete above.
-`ent_trans` for funTok needs the combined-witness construction (in progress).
--/
+/-- Def 2.1 `ent_trans`: cases on the RHS token (Scott’s turnstile advice). -/
+theorem LamEntDepth_trans {u v : Finset (RawLamToken α)} {c : RawLamToken α}
+    (hv : LamConDepth A v) (hu : LamConDepth A u)
+    (hEnts : ∀ t ∈ u, LamEntDepth A v t) (ht : LamEntDepth A u c) :
+    LamEntDepth A v c := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  suffices ∀ M u v c,
+      Nat.max (finsetMaxDepth v) (Nat.max (finsetMaxDepth u) (rawDepth c)) = M →
+      LamConDepth A v → LamConDepth A u →
+      (∀ t ∈ u, LamEntDepth A v t) → LamEntDepth A u c → LamEntDepth A v c from
+    this _ u v c rfl hv hu hEnts ht
+  intro M
+  induction M using Nat.strong_induction_on with
+  | h M ih =>
+    intro u v c hM hv hu hEnts ht
+    have hleV : finsetMaxDepth v ≤ M := by rw [← hM]; exact Nat.le_max_left _ _
+    have hleU : finsetMaxDepth u ≤ M := by
+      rw [← hM]; exact Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _)
+    have hleC : rawDepth c ≤ M := by
+      rw [← hM]; exact Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _)
+    -- (8) bot
+    match c with
+    | .bot => exact LamEntDepth.bot hv
+    -- (10) atom
+    | .atom x =>
+      cases ht with
+      | @atom u x hu' hF hne hEnt =>
+        obtain ⟨y0, hy0⟩ := Finset.nonempty_of_ne_empty hne
+        have hEy0 := hEnts _ (mem_lamAtomFinset.1 hy0)
+        have hFv : lamFunFinset v = ∅ := by
+          cases hEy0 with
+          | atom _ hFv' _ _ => exact hFv'
+        have hneV : lamAtomFinset v ≠ ∅ := by
+          cases hEy0 with
+          | atom _ _ hneV _ => exact hneV
+        have hAtomEnt : ∀ y ∈ lamAtomFinset u, A.Ent (lamAtomFinset v) y := by
+          intro y hy
+          have hEy := hEnts _ (mem_lamAtomFinset.1 hy)
+          cases hEy with
+          | atom _ _ _ hE => exact hE
+        exact LamEntDepth.atom hv hFv hneV
+          (A.ent_trans ((LamConDepth_of_fun_empty A hFv).1 hv)
+            ((LamConDepth_of_fun_empty A hF).1 hu') hAtomEnt hEnt)
+    -- (11) funTok
+    | .funTok xs ys =>
+      cases ht with
+      | @funTok u xs ys s hu' hA hConIn hConOut hs hWorld hInCompat hEntIn hEntOut =>
+        obtain ⟨p0, hp0⟩ := Finset.nonempty_of_ne_empty hWorld
+        have hEp0 := hEnts _ (mem_lamFunFinset.1 hp0)
+        have hAv : lamAtomFinset v = ∅ := by
+          cases hEp0 with
+          | funTok _ hAv' _ _ _ _ _ _ _ => exact hAv'
+        have hFv : lamFunFinset v ≠ ∅ := by
+          cases hEp0 with
+          | funTok _ _ _ _ _ hFv' _ _ _ => exact hFv'
+        have hWit : ∀ p ∈ s, ∃ s_p ⊆ lamFunFinset v,
+            LamConDepth A (listToFinset p.1) ∧ LamConDepth A (listToFinset p.2) ∧
+            (∀ r ∈ s_p, ∀ z ∈ listToFinset r.1, LamEntDepth A (listToFinset p.1) z) ∧
+            (∀ z ∈ listToFinset p.2, LamEntDepth A (lamOutputUnion s_p) z) := by
+          intro p hp
+          have hEp := hEnts _ (mem_lamFunFinset.1 (hs hp))
+          cases hEp with
+          | @funTok _ _ _ s_p _ _ hCi hCo hs_p _ _ hEi hEo =>
+            exact ⟨s_p, hs_p, hCi, hCo, hEi, hEo⟩
+        -- Combined witness by Finset.induction_on (choice-free; avoid erase/card)
+        have hComb : ∀ (s' : Finset (List (RawLamToken α) × List (RawLamToken α))),
+            s' ⊆ s →
+            ∃ S ⊆ lamFunFinset v,
+              (∀ r ∈ S, ∀ z ∈ listToFinset r.1, LamEntDepth A (listToFinset xs) z) ∧
+              (∀ z ∈ lamOutputUnion s', LamEntDepth A (lamOutputUnion S) z) ∧
+              LamConDepth A (lamOutputUnion S) := by
+          intro s'
+          induction s' using Finset.induction_on with
+          | empty =>
+            intro _
+            refine ⟨(∅ : Finset (List (RawLamToken α) × List (RawLamToken α))),
+              Finset.empty_subset _, ?_, ?_, ?_⟩
+            · intro _ hr; exact False.elim (Finset.notMem_empty _ hr)
+            · intro z hz
+              rw [lamOutputUnion_empty] at hz
+              exact False.elim (Finset.notMem_empty z hz)
+            · rw [lamOutputUnion_empty]; exact LamConDepth_empty A
+          | insert q sR hq ihS =>
+            intro hs'
+            have hsR : sR ⊆ s := fun p hp => hs' (Finset.mem_insert_of_mem hp)
+            have hqS : q ∈ s := hs' (Finset.mem_insert_self q sR)
+            obtain ⟨S', hS'sub, hS'in, hS'out, hConS'⟩ := ihS hsR
+            obtain ⟨Sq, hSqsub, hConQIn, hConQOut, hSqin, hSqout⟩ := hWit q hqS
+            have hSsub : S' ∪' Sq ⊆ lamFunFinset v :=
+              funion_subset_iff.mpr ⟨hS'sub, hSqsub⟩
+            have hEntAll : ∀ t ∈ lamInputUnion (S' ∪' Sq),
+                LamEntDepth A (listToFinset xs) t := by
+              intro t ht
+              rcases (mem_lamInputUnion).1 ht with ⟨r, hr, ht'⟩
+              rcases mem_funion.1 hr with hr | hr
+              · exact hS'in r hr t ht'
+              · refine ih _ ?_ (listToFinset q.1) (listToFinset xs) t rfl
+                  hConIn hConQIn (fun w hw => hEntIn q hqS w hw) (hSqin r hr t ht')
+                have htok : .funTok q.1 q.2 ∈ u := mem_lamFunFinset.1 (hs hqS)
+                have htokR : .funTok r.1 r.2 ∈ v :=
+                  mem_lamFunFinset.1 (hSsub (mem_funion.2 (Or.inr hr)))
+                have hzt := rawDepth_funTok_gt_left (v := r.2) ((mem_listToFinset).1 ht')
+                have hDq := (finsetMaxDepth_of_mem_funTok htok).1
+                have hDxs := finsetMaxDepth_list_lt_funTok xs ys
+                exact Nat.max_lt.2 ⟨Nat.lt_of_lt_of_le hDxs hleC,
+                  Nat.max_lt.2 ⟨Nat.lt_of_lt_of_le hDq hleU,
+                    Nat.lt_of_lt_of_le
+                      (Nat.lt_of_lt_of_le hzt (le_finsetMaxDepth_of_mem htokR))
+                      hleV⟩⟩
+            have hinU : LamConDepth A (lamInputUnion (S' ∪' Sq)) :=
+              LamConDepth_mono A (subset_funion_right _ _)
+                (LamConDepth_funion_of_entSet A M
+                  (fun _ _ _ hE => LamConDepth_insert_of_ent A hE)
+                  hConIn hEntAll (fun t ht => by
+                    rcases (mem_lamInputUnion).1 ht with ⟨r, hr, ht'⟩
+                    have hDxs := finsetMaxDepth_list_lt_funTok xs ys
+                    have htok : .funTok r.1 r.2 ∈ v := mem_lamFunFinset.1 (hSsub hr)
+                    exact Nat.max_lt.2 ⟨Nat.lt_of_lt_of_le hDxs hleC,
+                      Nat.lt_of_lt_of_le
+                        (Nat.lt_of_lt_of_le
+                          (rawDepth_funTok_gt_left (v := r.2) ((mem_listToFinset).1 ht'))
+                          (le_finsetMaxDepth_of_mem htok)) hleV⟩))
+            have hConU : LamConDepth A (lamOutputUnion (S' ∪' Sq)) :=
+              ((LamConDepth_of_fun_nonempty A hFv).1 hv).2.2 (S' ∪' Sq) hSsub hinU
+            have hConU' : LamConDepth A (lamOutputUnion S' ∪' lamOutputUnion Sq) := by
+              rw [← lamOutputUnion_funion]; exact hConU
+            refine ⟨S' ∪' Sq, hSsub, ?_, ?_, hConU⟩
+            · intro r hr z hz
+              rcases mem_funion.1 hr with hr | hr
+              · exact hS'in r hr z hz
+              · exact hEntAll _ ((mem_lamInputUnion).2 ⟨r, mem_funion.2 (Or.inr hr), hz⟩)
+            · intro z hz
+              rw [lamOutputUnion_funion]
+              have hz'' : z ∈ listToFinset q.2 ∪' lamOutputUnion sR := by
+                rwa [lamOutputUnion_insert] at hz
+              rcases mem_funion.1 hz'' with hzQ | hzR
+              · have hzx := hSqout z hzQ
+                have hsub := subset_funion_right (lamOutputUnion S') (lamOutputUnion Sq)
+                cases decidableEq_finset
+                    (lamFunFinset (lamOutputUnion S' ∪' lamOutputUnion Sq)) ∅ with
+                | isFalse hFn =>
+                  exact LamEntDepth_weaken_fun A hsub hConU'
+                    ((LamConDepth_of_fun_nonempty A hFn).1 hConU').1 hzx
+                | isTrue hFo =>
+                  match z with
+                  | .bot => exact LamEntDepth.bot hConU'
+                  | .atom _ =>
+                    exact LamEntDepth_weaken_atom A hsub hConU' hFo hzx
+                  | .funTok _ _ =>
+                    cases hzx with
+                    | funTok _ _ _ _ _ hWo _ _ _ =>
+                      exact False.elim (hWo (Finset.Subset.antisymm
+                        (fun p hp => by
+                          have : p ∈ lamFunFinset
+                              (lamOutputUnion S' ∪' lamOutputUnion Sq) := by
+                            rw [lamFunFinset_funion]
+                            exact mem_funion.2 (Or.inr hp)
+                          exact False.elim (Finset.notMem_empty p (hFo ▸ this)))
+                        (Finset.empty_subset _)))
+              · have hzx := hS'out z hzR
+                have hsub := subset_funion_left (lamOutputUnion S') (lamOutputUnion Sq)
+                cases decidableEq_finset
+                    (lamFunFinset (lamOutputUnion S' ∪' lamOutputUnion Sq)) ∅ with
+                | isFalse hFn =>
+                  exact LamEntDepth_weaken_fun A hsub hConU'
+                    ((LamConDepth_of_fun_nonempty A hFn).1 hConU').1 hzx
+                | isTrue hFo =>
+                  match z with
+                  | .bot => exact LamEntDepth.bot hConU'
+                  | .atom _ =>
+                    exact LamEntDepth_weaken_atom A hsub hConU' hFo hzx
+                  | .funTok _ _ =>
+                    cases hzx with
+                    | funTok _ _ _ _ _ hWo _ _ _ =>
+                      exact False.elim (hWo (Finset.Subset.antisymm
+                        (fun p hp => by
+                          have : p ∈ lamFunFinset
+                              (lamOutputUnion S' ∪' lamOutputUnion Sq) := by
+                            rw [lamFunFinset_funion]
+                            exact mem_funion.2 (Or.inl hp)
+                          exact False.elim (Finset.notMem_empty p (hFo ▸ this)))
+                        (Finset.empty_subset _)))
+        obtain ⟨S, hSsub, hSin, hSoutS, hConS⟩ :=
+          hComb s (Finset.Subset.refl _)
+        have hConOutS : LamConDepth A (lamOutputUnion s) :=
+          ((LamConDepth_of_fun_nonempty A hWorld).1 hu').2.2 s hs
+            (LamConDepth_mono A (subset_funion_right _ _)
+              (LamConDepth_funion_of_entSet A M
+                (fun _ _ _ hE => LamConDepth_insert_of_ent A hE)
+                hConIn
+                (fun t ht => by
+                  rcases (mem_lamInputUnion).1 ht with ⟨p, hp, ht'⟩
+                  exact hEntIn p hp t ht')
+                (fun t ht => by
+                  rcases (mem_lamInputUnion).1 ht with ⟨p, hp, ht'⟩
+                  have hDxs := finsetMaxDepth_list_lt_funTok xs ys
+                  have htok : .funTok p.1 p.2 ∈ u := mem_lamFunFinset.1 (hs hp)
+                  exact Nat.max_lt.2 ⟨Nat.lt_of_lt_of_le hDxs hleC,
+                    Nat.lt_of_lt_of_le
+                      (Nat.lt_of_lt_of_le
+                        (rawDepth_funTok_gt_left ((mem_listToFinset).1 ht'))
+                        (le_finsetMaxDepth_of_mem htok)) hleU⟩)))
+        have hSout : ∀ z ∈ listToFinset ys, LamEntDepth A (lamOutputUnion S) z := by
+          intro z hz
+          refine ih _ ?_ (lamOutputUnion s) (lamOutputUnion S) z rfl
+            hConS hConOutS (fun t ht => hSoutS t ht) (hEntOut z hz)
+          exact Nat.max_lt.2 ⟨
+            Nat.lt_of_lt_of_le (finsetMaxDepth_outputUnion_lt hSsub hFv) hleV,
+            Nat.max_lt.2 ⟨
+              Nat.lt_of_lt_of_le (finsetMaxDepth_outputUnion_lt hs hWorld) hleU,
+              Nat.lt_of_lt_of_le
+                (rawDepth_funTok_gt_right ((mem_listToFinset).1 hz)) hleC⟩⟩
+        have hInCompat' : lamFunFinset (listToFinset xs) = ∅ →
+            lamFunFinset (lamInputUnion S) = ∅ := by
+          intro hxsF
+          ext p
+          constructor
+          · intro hp
+            have hmem : .funTok p.1 p.2 ∈ lamInputUnion S := mem_lamFunFinset.1 hp
+            rcases (mem_lamInputUnion).1 hmem with ⟨r, hr, hr'⟩
+            cases hSin r hr _ hr' with
+            | funTok _ _ _ _ _ hWx _ _ _ => exact False.elim (hWx hxsF)
+          · intro hp; exact False.elim (Finset.notMem_empty _ hp)
+        exact LamEntDepth.funTok hv hAv hConIn hConOut hSsub hFv hInCompat' hSin hSout
 
-end InfoSys
+/-! ### Phase B — `lambdaSystem` (Def 2.1) on `LamConDepth` -/
 
-end Scott1982
+/-- Well-formed tokens under depth Con (Scott (1)–(3) for the InfoSys instance).
+Early staged `IsLamToken` / `LamToken` remain scaffolding only. -/
+def IsLamWF : RawLamToken α → Prop
+  | .bot | .atom _ => True
+  | .funTok xs ys => LamConDepth A (listToFinset xs) ∧ LamConDepth A (listToFinset ys)
+
+/-- Carrier of `lambdaSystem`. -/
+def LamDToken : Type _ := { t : RawLamToken α // IsLamWF A t }
+
+instance : DecidableEq (LamDToken A) := Subtype.instDecidableEq
+
+def lamDBot : LamDToken A := ⟨.bot, trivial⟩
+
+def lamDForget (t : LamDToken A) : RawLamToken α := t.val
+
+private def lamDForgetInsert :
+    LamDToken A → Finset (RawLamToken α) → Finset (RawLamToken α) :=
+  fun t => insert (lamDForget A t)
+
+private instance : LeftCommutative (lamDForgetInsert (A := A)) :=
+  ⟨fun p q s => insert_comm' (lamDForget A p) (lamDForget A q) s⟩
+
+def lamDForgetFinset (u : Finset (LamDToken A)) : Finset (RawLamToken α) :=
+  Multiset.foldr (lamDForgetInsert (A := A)) ∅ u.1
+
+private theorem mem_foldr_lamDForget (s : Multiset (LamDToken A)) (t : RawLamToken α) :
+    t ∈ Multiset.foldr (lamDForgetInsert (A := A)) ∅ s ↔ ∃ p ∈ s, p.val = t := by
+  refine Multiset.induction_on s ?_ ?_
+  · constructor
+    · intro ht; exact False.elim (Finset.notMem_empty t ht)
+    · rintro ⟨_, hp, _⟩; exact False.elim (by cases hp)
+  · intro p rest ih
+    simp only [Multiset.foldr_cons, lamDForgetInsert, Finset.mem_insert, ih, Multiset.mem_cons]
+    constructor
+    · rintro (rfl | ⟨q, hq, hq'⟩)
+      · exact ⟨p, Or.inl rfl, rfl⟩
+      · exact ⟨q, Or.inr hq, hq'⟩
+    · rintro ⟨q, hq, hq'⟩
+      rcases hq with rfl | hq
+      · exact Or.inl hq'.symm
+      · exact Or.inr ⟨q, hq, hq'⟩
+
+theorem mem_lamDForgetFinset {u : Finset (LamDToken A)} {t : RawLamToken α} :
+    t ∈ lamDForgetFinset A u ↔ ∃ p ∈ u, p.val = t := by
+  simpa [lamDForgetFinset] using mem_foldr_lamDForget A u.1 t
+
+theorem lamDForgetFinset_empty : lamDForgetFinset A (∅ : Finset (LamDToken A)) = ∅ :=
+  rfl
+
+theorem lamDForgetFinset_singleton (p : LamDToken A) :
+    lamDForgetFinset A {p} = {p.val} := by
+  ext t
+  constructor
+  · intro ht
+    rcases (mem_lamDForgetFinset A).1 ht with ⟨q, hq, hq'⟩
+    have : q = p := Finset.mem_singleton.mp hq
+    subst this; exact Finset.mem_singleton.mpr hq'.symm
+  · intro ht
+    exact (mem_lamDForgetFinset A).2
+      ⟨p, Finset.mem_singleton_self p, (Finset.mem_singleton.mp ht).symm⟩
+
+theorem lamDForgetFinset_insert (u : Finset (LamDToken A)) (p : LamDToken A) :
+    lamDForgetFinset A (insert p u) = insert p.val (lamDForgetFinset A u) := by
+  ext t
+  constructor
+  · intro ht
+    rcases (mem_lamDForgetFinset A).1 ht with ⟨q, hq, rfl⟩
+    rcases Finset.mem_insert.mp hq with rfl | hq
+    · exact Finset.mem_insert_self _ _
+    · exact Finset.mem_insert_of_mem ((mem_lamDForgetFinset A).2 ⟨q, hq, rfl⟩)
+  · intro ht
+    rcases Finset.mem_insert.mp ht with rfl | ht
+    · exact (mem_lamDForgetFinset A).2 ⟨p, Finset.mem_insert_self p u, rfl⟩
+    · rcases (mem_lamDForgetFinset A).1 ht with ⟨q, hq, rfl⟩
+      exact (mem_lamDForgetFinset A).2 ⟨q, Finset.mem_insert_of_mem hq, rfl⟩
+
+theorem lamDForgetFinset_mono {u v : Finset (LamDToken A)} (h : v ⊆ u) :
+    lamDForgetFinset A v ⊆ lamDForgetFinset A u := by
+  intro t ht
+  rcases (mem_lamDForgetFinset A).1 ht with ⟨p, hp, rfl⟩
+  exact (mem_lamDForgetFinset A).2 ⟨p, h hp, rfl⟩
+
+/-- Singleton funTok is Con when components are (Scott (7) on a singleton). -/
+theorem LamConDepth_singleton_funTok (xs ys : List (RawLamToken α))
+    (hxs : LamConDepth A (listToFinset xs)) (hys : LamConDepth A (listToFinset ys)) :
+    LamConDepth A ({.funTok xs ys} : Finset (RawLamToken α)) := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  have hF : lamFunFinset ({.funTok xs ys} : Finset (RawLamToken α)) = {(xs, ys)} :=
+    lamFunFinset_singleton_funTok xs ys
+  have hA : lamAtomFinset ({.funTok xs ys} : Finset (RawLamToken α)) = ∅ :=
+    lamAtomFinset_singleton_funTok xs ys
+  have hne : lamFunFinset ({.funTok xs ys} : Finset (RawLamToken α)) ≠ ∅ := by
+    rw [hF]; exact Finset.singleton_ne_empty _
+  refine (LamConDepth_of_fun_nonempty A hne).2 ⟨hA, ?_, ?_⟩
+  · intro p hp
+    have : p = (xs, ys) := Finset.mem_singleton.mp (hF ▸ hp)
+    subst this; exact ⟨hxs, hys⟩
+  · intro s hs hIn
+    rw [hF] at hs
+    by_cases hmem : (xs, ys) ∈ s
+    · have hsin : s = {(xs, ys)} := by
+        ext p
+        constructor
+        · intro hp
+          exact Finset.mem_singleton.mpr (Finset.mem_singleton.mp (hs hp))
+        · intro hp
+          have : p = (xs, ys) := Finset.mem_singleton.mp hp
+          subst this; exact hmem
+      subst hsin
+      rw [lamOutputUnion_singleton]
+      exact hys
+    · have hempty : s = ∅ := by
+        ext p
+        constructor
+        · intro hp
+          exact False.elim (hmem (by
+            have : p = (xs, ys) := Finset.mem_singleton.mp (hs hp)
+            subst this; exact hp))
+        · intro hp; exact False.elim (Finset.notMem_empty p hp)
+      subst hempty
+      rw [lamOutputUnion_empty]
+      exact LamConDepth_empty A
+
+theorem IsLamWF_of_mem {u : Finset (RawLamToken α)} (hu : LamConDepth A u)
+    {t : RawLamToken α} (ht : t ∈ u) : IsLamWF A t := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  match t with
+  | .bot | .atom _ => trivial
+  | .funTok xs ys =>
+    have hmem : (xs, ys) ∈ lamFunFinset u := mem_lamFunFinset.2 ht
+    by_cases hF : lamFunFinset u = ∅
+    · exact False.elim (Finset.notMem_empty _ (hF ▸ hmem))
+    · exact ((LamConDepth_of_fun_nonempty A hF).1 hu).2.1 _ hmem
+
+/-- Bundled consistency on `LamDToken` finsets. -/
+def LamDCon (u : Finset (LamDToken A)) : Prop :=
+  LamConDepth A (lamDForgetFinset A u)
+
+/-- Bundled entailment on `LamDToken`. -/
+def LamDEnt (u : Finset (LamDToken A)) (p : LamDToken A) : Prop :=
+  LamEntDepth A (lamDForgetFinset A u) p.val
+
+theorem LamDCon_empty : LamDCon A (∅ : Finset (LamDToken A)) := by
+  simpa [LamDCon, lamDForgetFinset_empty] using LamConDepth_empty A
+
+theorem LamDCon_subset {u v : Finset (LamDToken A)}
+    (hu : LamDCon A u) (hv : v ⊆ u) : LamDCon A v :=
+  LamConDepth_mono A (lamDForgetFinset_mono A hv) hu
+
+theorem LamDCon_singleton (p : LamDToken A) : LamDCon A {p} := by
+  rw [LamDCon, lamDForgetFinset_singleton]
+  match p.val, p.property with
+  | .bot, _ => exact LamConDepth_singleton_bot A
+  | .atom x, _ => exact LamConDepth_singleton_atom A x
+  | .funTok xs ys, ⟨hxs, hys⟩ => exact LamConDepth_singleton_funTok A xs ys hxs hys
+
+theorem LamDEnt_bot {u : Finset (LamDToken A)} (hu : LamDCon A u) :
+    LamDEnt A u (lamDBot A) :=
+  LamEntDepth.bot hu
+
+theorem LamDEnt_of_mem {u : Finset (LamDToken A)} {p : LamDToken A}
+    (hu : LamDCon A u) (hp : p ∈ u) : LamDEnt A u p :=
+  LamEntDepth_of_mem A hu ((mem_lamDForgetFinset A).2 ⟨p, hp, rfl⟩)
+
+theorem LamDCon_insert_of_ent {u : Finset (LamDToken A)} {p : LamDToken A}
+    (ht : LamDEnt A u p) : LamDCon A (insert p u) := by
+  rw [LamDCon, lamDForgetFinset_insert]
+  exact LamConDepth_insert_of_ent A ht
+
+theorem LamDEnt_trans {u v : Finset (LamDToken A)} {c : LamDToken A}
+    (hv : LamDCon A v) (hu : LamDCon A u)
+    (hEnts : ∀ t ∈ u, LamDEnt A v t) (ht : LamDEnt A u c) :
+    LamDEnt A v c :=
+  LamEntDepth_trans A hv hu
+    (fun t ht' => by
+      rcases (mem_lamDForgetFinset A).1 ht' with ⟨p, hp, rfl⟩
+      exact hEnts p hp)
+    ht
+
+/-- **Definition 2.1 packaging.** The λ-calculus information system `D`. -/
+def lambdaSystem : InfoSys (LamDToken A) where
+  bot := lamDBot A
+  Con := {u | LamDCon A u}
+  Ent := LamDEnt A
+  con_subset := fun hu hv => LamDCon_subset A hu hv
+  con_sing := LamDCon_singleton A
+  ent_con := fun h => LamDCon_insert_of_ent A h
+  ent_bot := fun hu => LamDEnt_bot A hu
+  ent_refl := fun hu hp => LamDEnt_of_mem A hu hp
+  ent_trans := fun hv hu hEnts hEntc => LamDEnt_trans A hv hu hEnts hEntc
+
+/-! ### Phase C — domain equation `D ≅ A + (D → D)` -/
+
+/-- Lift a raw Con set to a finset of depth-WF tokens. -/
+def listToLamDFinset :
+    (xs : List (RawLamToken α)) →
+      (∀ t ∈ xs, IsLamWF A t) → Finset (LamDToken A)
+  | [], _ => ∅
+  | t :: ts, h =>
+      insert ⟨t, h t List.mem_cons_self⟩
+        (listToLamDFinset ts fun w hw => h w (List.mem_cons_of_mem t hw))
+
+theorem mem_listToLamDFinset {xs : List (RawLamToken α)}
+    {h : ∀ t ∈ xs, IsLamWF A t} {p : LamDToken A} :
+    p ∈ listToLamDFinset A xs h ↔ p.val ∈ xs := by
+  induction xs with
+  | nil =>
+    constructor
+    · intro hp; exact False.elim (Finset.notMem_empty _ hp)
+    · intro hp; cases hp
+  | cons t ts ih =>
+    constructor
+    · intro hp
+      rcases Finset.mem_insert.mp hp with hp | hp
+      · subst hp; exact List.mem_cons_self
+      · exact List.mem_cons_of_mem _ (ih.1 hp)
+    · intro hp
+      rcases List.mem_cons.mp hp with rfl | hp
+      · exact Finset.mem_insert_self _ _
+      · exact Finset.mem_insert_of_mem (ih.2 hp)
+
+theorem lamDForget_listToLamDFinset (xs : List (RawLamToken α))
+    (h : ∀ t ∈ xs, IsLamWF A t) :
+    lamDForgetFinset A (listToLamDFinset A xs h) = listToFinset xs := by
+  induction xs with
+  | nil => rfl
+  | cons t ts ih =>
+    rw [listToLamDFinset, lamDForgetFinset_insert, listToFinset, ih]
+
+theorem LamDCon_listToLamDFinset (xs : List (RawLamToken α))
+    (hCon : LamConDepth A (listToFinset xs)) :
+    LamDCon A (listToLamDFinset A xs fun _t ht =>
+      IsLamWF_of_mem A hCon ((mem_listToFinset).2 ht)) := by
+  rw [LamDCon, lamDForget_listToLamDFinset]
+  exact hCon
+
+/-- Unfold a λ-token into the sum-of-function-space carrier (Scott’s matching). -/
+def lamUnfold (t : LamDToken A) :
+    SumToken α (FunToken (lambdaSystem A) (lambdaSystem A)) :=
+  match t with
+  | ⟨.bot, _⟩ => .bot
+  | ⟨.atom x, _⟩ => .left x
+  | ⟨.funTok xs ys, ⟨hxs, hys⟩⟩ =>
+      let u := listToLamDFinset A xs fun _w hw =>
+        IsLamWF_of_mem A hxs ((mem_listToFinset).2 hw)
+      let v := listToLamDFinset A ys fun _w hw =>
+        IsLamWF_of_mem A hys ((mem_listToFinset).2 hw)
+      .right ⟨(u, v), ⟨LamDCon_listToLamDFinset A xs hxs,
+        LamDCon_listToLamDFinset A ys hys⟩⟩
+
+theorem lamUnfold_bot : lamUnfold A (lamDBot A) = SumToken.bot := rfl
+
+theorem lamUnfold_atom (x : α) :
+    lamUnfold A ⟨.atom x, trivial⟩ = SumToken.left x := rfl
+
+/-- Right-hand side of the domain equation: `A + (D → D)`. -/
+def lamRhs : InfoSys (SumToken α (FunToken (lambdaSystem A) (lambdaSystem A))) :=
+  sumSystem A (functionSystem (lambdaSystem A) (lambdaSystem A))
+
+theorem lamRhs_eq_sum_function :
+    lamRhs A = sumSystem A (functionSystem (lambdaSystem A) (lambdaSystem A)) :=
+  rfl
+
