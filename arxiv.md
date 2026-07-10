@@ -666,11 +666,11 @@ flowchart LR
 #### Factoid 8.2
 * **Mathematical Target:** λ-calculus model `D ≅ A + (D → D)` via mutual recursion of `D` and `Con`.
 * **Lean File:** `Scott1982/Factoid82.lean`
-* **Proof Notes:** **Partial** — nested `RawLamToken`; staged `LamConN`/`LamEntN` with
-  `ent_refl` and bot/atom `ent_con`; **depth measure** (`rawDepth`/`finsetMaxDepth`) and
-  well-founded **`LamConDepth`** (FunCon-positive via `termination_by`, Scott’s complexity
-  stratification). Next: migrate Def 2.1 axioms onto `LamConDepth`, then `ent_trans` /
-  `lambdaSystem` / unfold. Axioms ⊆ `{propext, Quot.sound}`.
+* **Proof Notes:** **Partial** — choice-free well-founded **`LamConDepth`** (FunCon via
+  `termination_by` + `decidableEq_finset`) and inductive **`LamEntDepth`** (Scott (8)–(11),
+  FunEnt-style). Depth Def 2.1 fragments: `con_subset`/`con_sing` (empty/bot/atom),
+  `ent_bot`, **`ent_refl`** (`LamEntDepth_of_mem`), bot/atom `ent_con`. Next: funTok
+  `ent_con`/`ent_trans`, `lambdaSystem`, unfold. Axioms ⊆ `{propext, Quot.sound}`.
 
 #### Factoid 8.3
 * **Mathematical Target:** Universal domain remarks (`V`, retract `U`).

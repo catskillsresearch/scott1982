@@ -11,10 +11,10 @@ tokens whose components and FunCon checks live at stage `n`. Then
 `LamCon u := ∃ n, LamConN n u`. Entailment is staged the same way as `LamEntN`
 (Scott (8)–(11)).
 
-**Status:** `RawLamToken` / `LamToken`; staged `LamCon` / `LamEnt`; Def 2.1
-`con_subset`, `con_sing`, `ent_bot`, **`ent_refl`** (`LamTokenEnt_of_mem`);
-`ent_con` for bot/atom; depth measure + experimental `LamConDepth` (wf). Remaining: migrate axioms to depth Con, `ent_trans`, full
-`lambdaSystem`, unfold into `sumSystem A (functionSystem D D)`.
+**Status:** Depth-based `LamConDepth` / `LamEntDepth` (wf; choice-free) is the
+primary path for Def 2.1. Staged `LamConN` retained as scaffolding. Remaining:
+finish depth `ent_con`/`ent_trans`, `lambdaSystem`, unfold into
+`sumSystem A (functionSystem D D)`.
 -/
 
 namespace Scott1982
@@ -1158,9 +1158,12 @@ theorem finsetMaxDepth_outputUnion_lt {u : Finset (RawLamToken α)}
     (rawDepth_funTok_gt_right ((mem_listToFinset).1 htp))
     (le_finsetMaxDepth_of_mem htok)
 
-/-- Depth-based consistency (experimental; staged `LamCon` remains primary for now). -/
+/-- Depth-based consistency: FunCon in the recursive clause (Scott (7)).
+Uses `decidableEq_finset` so the empty-fun branch does not pull `Classical.choice`. -/
 def LamConDepth (u : Finset (RawLamToken α)) : Prop :=
-  if hF : lamFunFinset u = ∅ then
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  if _hF : lamFunFinset u = ∅ then
     lamAtomFinset u ∈ A.Con
   else
     lamAtomFinset u = ∅ ∧
@@ -1172,9 +1175,233 @@ termination_by finsetMaxDepth u
 decreasing_by
   · exact (finsetMaxDepth_of_mem_funTok (mem_lamFunFinset.1 ‹_›)).1
   · exact (finsetMaxDepth_of_mem_funTok (mem_lamFunFinset.1 ‹_›)).2
-  · exact finsetMaxDepth_inputUnion_lt ‹_› hF
-  · exact finsetMaxDepth_outputUnion_lt ‹_› hF
+  · exact finsetMaxDepth_inputUnion_lt ‹_› ‹_›
+  · exact finsetMaxDepth_outputUnion_lt ‹_› ‹_›
 
+theorem LamConDepth_empty : LamConDepth A (∅ : Finset (RawLamToken α)) := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  rw [LamConDepth.eq_1, dif_pos lamFunFinset_empty, lamAtomFinset_empty]
+  exact A.con_empty
+
+theorem LamConDepth_of_fun_empty {u : Finset (RawLamToken α)}
+    (hF : lamFunFinset u = ∅) :
+    LamConDepth A u ↔ lamAtomFinset u ∈ A.Con := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  rw [LamConDepth.eq_1, dif_pos hF]
+
+theorem LamConDepth_of_fun_nonempty {u : Finset (RawLamToken α)}
+    (hF : lamFunFinset u ≠ ∅) :
+    LamConDepth A u ↔
+      lamAtomFinset u = ∅ ∧
+        (∀ p ∈ lamFunFinset u,
+          LamConDepth A (listToFinset p.1) ∧ LamConDepth A (listToFinset p.2)) ∧
+        (∀ s ⊆ lamFunFinset u,
+          LamConDepth A (lamInputUnion s) → LamConDepth A (lamOutputUnion s)) := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  rw [LamConDepth.eq_1, dif_neg hF]
+
+theorem LamConDepth_mono {u v : Finset (RawLamToken α)}
+    (huv : u ⊆ v) (hv : LamConDepth A v) : LamConDepth A u := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  have hFunMono := lamFunFinset_mono huv
+  have hAtomMono := lamAtomFinset_mono huv
+  by_cases hFv : lamFunFinset v = ∅
+  · have hFu : lamFunFinset u = ∅ :=
+      Finset.Subset.antisymm
+        (fun p hp => by
+          have := hFunMono hp
+          rw [hFv] at this; exact False.elim (Finset.notMem_empty p this))
+        (Finset.empty_subset _)
+    exact (LamConDepth_of_fun_empty A hFu).2
+      (A.con_subset ((LamConDepth_of_fun_empty A hFv).1 hv) hAtomMono)
+  · have hv' := (LamConDepth_of_fun_nonempty A hFv).1 hv
+    rcases hv' with ⟨hAv, hWF, hFun⟩
+    by_cases hFu : lamFunFinset u = ∅
+    · have hAu : lamAtomFinset u = ∅ :=
+        Finset.Subset.antisymm
+          (fun x hx => by
+            have := hAtomMono hx
+            rw [hAv] at this; exact False.elim (Finset.notMem_empty x this))
+          (Finset.empty_subset _)
+      exact (LamConDepth_of_fun_empty A hFu).2 (by rw [hAu]; exact A.con_empty)
+    · refine (LamConDepth_of_fun_nonempty A hFu).2 ⟨?_, ?_, ?_⟩
+      · exact Finset.Subset.antisymm
+          (fun x hx => by
+            have := hAtomMono hx
+            rw [hAv] at this; exact False.elim (Finset.notMem_empty x this))
+          (Finset.empty_subset _)
+      · intro p hp; exact hWF p (hFunMono hp)
+      · intro s hs hIn
+        exact hFun s (fun p hp => hFunMono (hs hp)) hIn
+
+theorem LamConDepth_singleton_bot :
+    LamConDepth A ({.bot} : Finset (RawLamToken α)) := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  have hF : lamFunFinset ({.bot} : Finset (RawLamToken α)) = ∅ := by
+    ext p; constructor
+    · intro hp; exact False.elim (nomatch mem_lamFunFinset.1 hp)
+    · intro hp; exact False.elim (Finset.notMem_empty p hp)
+  exact (LamConDepth_of_fun_empty A hF).2 (by
+    have h : lamAtomFinset ({.bot} : Finset (RawLamToken α)) = ∅ := by
+      ext x; constructor
+      · intro hx; exact False.elim (nomatch mem_lamAtomFinset.1 hx)
+      · intro hx; exact False.elim (Finset.notMem_empty x hx)
+    rw [h]; exact A.con_empty)
+
+theorem LamConDepth_singleton_atom (x : α) :
+    LamConDepth A ({.atom x} : Finset (RawLamToken α)) := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  have hF : lamFunFinset ({.atom x} : Finset (RawLamToken α)) = ∅ := by
+    ext p; constructor
+    · intro hp; exact False.elim (nomatch mem_lamFunFinset.1 hp)
+    · intro hp; exact False.elim (Finset.notMem_empty p hp)
+  exact (LamConDepth_of_fun_empty A hF).2 (by
+    have h : lamAtomFinset ({.atom x} : Finset (RawLamToken α)) = {x} := by
+      ext y; simp only [mem_lamAtomFinset, Finset.mem_singleton]
+      exact ⟨RawLamToken.atom.inj, congrArg RawLamToken.atom⟩
+    rw [h]; exact A.con_sing x)
+
+/-! ## Depth-based entailment (Scott (8)–(11), inductive FunEnt-style) -/
+
+/-- Depth-based entailment as an inductive Prop (Scott (8)–(11)).
+Premises are positive, so FunEnt-style recursion is allowed — unlike FunCon
+inside an inductive `LamCon`. -/
+inductive LamEntDepth : Finset (RawLamToken α) → RawLamToken α → Prop where
+  | bot {u : Finset (RawLamToken α)}
+      (hu : LamConDepth A u) : LamEntDepth u .bot
+  | atom {u : Finset (RawLamToken α)} {x : α}
+      (hu : LamConDepth A u)
+      (hF : lamFunFinset u = ∅)
+      (hne : lamAtomFinset u ≠ ∅)
+      (hEnt : A.Ent (lamAtomFinset u) x) : LamEntDepth u (.atom x)
+  | funTok {u : Finset (RawLamToken α)} {xs ys : List (RawLamToken α)}
+      {s : Finset (List (RawLamToken α) × List (RawLamToken α))}
+      (hu : LamConDepth A u)
+      (hA : lamAtomFinset u = ∅)
+      (hConIn : LamConDepth A (listToFinset xs))
+      (hConOut : LamConDepth A (listToFinset ys))
+      (hs : s ⊆ lamFunFinset u)
+      (hEntIn : ∀ p ∈ s, ∀ z ∈ listToFinset p.1, LamEntDepth (listToFinset xs) z)
+      (hEntOut : ∀ z ∈ listToFinset ys, LamEntDepth (lamOutputUnion s) z) :
+      LamEntDepth u (.funTok xs ys)
+
+theorem LamEntDepth_con {u : Finset (RawLamToken α)} {t : RawLamToken α}
+    (ht : LamEntDepth A u t) : LamConDepth A u := by
+  cases ht with
+  | bot hu => exact hu
+  | atom hu _ _ _ => exact hu
+  | funTok hu _ _ _ _ _ _ => exact hu
+
+theorem LamEntDepth_bot {u : Finset (RawLamToken α)} (hu : LamConDepth A u) :
+    LamEntDepth A u .bot :=
+  LamEntDepth.bot hu
+
+theorem LamEntDepth_of_mem {u : Finset (RawLamToken α)} {t : RawLamToken α}
+    (hu : LamConDepth A u) (ht : t ∈ u) : LamEntDepth A u t := by
+  suffices ∀ M u t, Nat.max (finsetMaxDepth u) (rawDepth t) = M →
+      LamConDepth A u → t ∈ u → LamEntDepth A u t from
+    this _ _ _ rfl hu ht
+  intro M
+  induction M using Nat.strong_induction_on with
+  | h M ih =>
+    intro u t hM hu ht
+    match t with
+    | .bot => exact LamEntDepth_bot A hu
+    | .atom x =>
+      cases decidableEq_finset (lamFunFinset u) ∅ with
+      | isTrue hF =>
+        have hx : x ∈ lamAtomFinset u := mem_lamAtomFinset.2 ht
+        exact LamEntDepth.atom hu hF (Finset.ne_empty_of_mem hx)
+          (A.ent_refl ((LamConDepth_of_fun_empty A hF).1 hu) hx)
+      | isFalse hF =>
+        have hA := ((LamConDepth_of_fun_nonempty A hF).1 hu).1
+        have hx : x ∈ lamAtomFinset u := mem_lamAtomFinset.2 ht
+        rw [hA] at hx; exact False.elim (Finset.notMem_empty x hx)
+    | .funTok xs ys =>
+      cases decidableEq_finset (lamFunFinset u) ∅ with
+      | isTrue hF =>
+        have : (xs, ys) ∈ lamFunFinset u := mem_lamFunFinset.2 ht
+        rw [hF] at this; exact False.elim (Finset.notMem_empty _ this)
+      | isFalse hF =>
+        have hu' := (LamConDepth_of_fun_nonempty A hF).1 hu
+        rcases hu' with ⟨hA, hWF, _hFun⟩
+        have hmem : (xs, ys) ∈ lamFunFinset u := mem_lamFunFinset.2 ht
+        have ⟨hConIn, hConOut⟩ := hWF (xs, ys) hmem
+        refine LamEntDepth.funTok (s := {(xs, ys)}) hu hA hConIn hConOut
+          (fun p hp => by
+            have hp' : p = (xs, ys) := Finset.mem_singleton.mp hp
+            exact hp' ▸ hmem) ?_ ?_
+        · intro p hp z hz
+          have hp' : p = (xs, ys) := Finset.mem_singleton.mp hp
+          subst hp'
+          refine ih (Nat.max (finsetMaxDepth (listToFinset xs)) (rawDepth z))
+            ?_ (listToFinset xs) z rfl hConIn hz
+          have htok : .funTok xs ys ∈ u := mem_lamFunFinset.1 hmem
+          have ht_lt : rawDepth z < finsetMaxDepth u :=
+            Nat.lt_of_lt_of_le (rawDepth_funTok_gt_left ((mem_listToFinset).1 hz))
+              (le_finsetMaxDepth_of_mem htok)
+          have hxs_lt : finsetMaxDepth (listToFinset xs) < rawDepth (.funTok xs ys) :=
+            finsetMaxDepth_list_lt_funTok xs ys
+          rw [← hM]
+          refine Nat.max_lt.2 ⟨
+            Nat.lt_of_lt_of_le hxs_lt (Nat.le_max_right _ _),
+            Nat.lt_of_lt_of_le ht_lt (Nat.le_max_left _ _)⟩
+        · intro z hz
+          rw [lamOutputUnion_singleton]
+          refine ih (Nat.max (finsetMaxDepth (listToFinset ys)) (rawDepth z))
+            ?_ (listToFinset ys) z rfl hConOut hz
+          have ht_lt : rawDepth z < rawDepth (.funTok xs ys) :=
+            rawDepth_funTok_gt_right ((mem_listToFinset).1 hz)
+          have hys_lt : finsetMaxDepth (listToFinset ys) < rawDepth (.funTok xs ys) :=
+            finsetMaxDepth_list_lt_funTok_out xs ys
+          rw [← hM]
+          refine Nat.max_lt.2 ⟨
+            Nat.lt_of_lt_of_le hys_lt (Nat.le_max_right _ _),
+            Nat.lt_of_lt_of_le ht_lt (Nat.le_max_right _ _)⟩
+
+/-- Inserting bot preserves depth-Con. -/
+theorem LamConDepth_insert_bot {u : Finset (RawLamToken α)}
+    (hu : LamConDepth A u) :
+    LamConDepth A (insert (.bot : RawLamToken α) u) := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  by_cases hF : lamFunFinset u = ∅
+  · have hF' : lamFunFinset (insert (.bot : RawLamToken α) u) = ∅ := by
+      rw [lamFunFinset_insert_bot]; exact hF
+    exact (LamConDepth_of_fun_empty A hF').2 (by
+      rw [lamAtomFinset_insert_bot]
+      exact (LamConDepth_of_fun_empty A hF).1 hu)
+  · have hu' := (LamConDepth_of_fun_nonempty A hF).1 hu
+    rcases hu' with ⟨hA, hWF, hFun⟩
+    have hF' : lamFunFinset (insert (.bot : RawLamToken α) u) ≠ ∅ := by
+      rw [lamFunFinset_insert_bot]; exact hF
+    refine (LamConDepth_of_fun_nonempty A hF').2 ⟨?_, ?_, ?_⟩
+    · rw [lamAtomFinset_insert_bot]; exact hA
+    · intro p hp
+      rw [lamFunFinset_insert_bot] at hp
+      exact hWF p hp
+    · intro s hs hIn
+      refine hFun s (by rw [← lamFunFinset_insert_bot u]; exact hs) hIn
+
+/-- Inserting an entailed atom preserves depth-Con. -/
+theorem LamConDepth_insert_atom {u : Finset (RawLamToken α)} {x : α}
+    (ht : LamEntDepth A u (.atom x)) :
+    LamConDepth A (insert (.atom x) u) := by
+  haveI : DecidableEq (Finset (List (RawLamToken α) × List (RawLamToken α))) :=
+    decidableEq_finset
+  cases ht with
+  | atom hu hF _hne hEnt =>
+    have hF' : lamFunFinset (insert (.atom x) u) = ∅ := by
+      rw [lamFunFinset_insert_atom]; exact hF
+    exact (LamConDepth_of_fun_empty A hF').2 (by
+      rw [lamAtomFinset_insert_atom]
+      exact A.ent_con hEnt)
 
 end InfoSys
 
