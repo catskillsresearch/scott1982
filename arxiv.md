@@ -345,32 +345,40 @@ flowchart TD
 
 ```mermaid
 flowchart TD
+  C["Constructive.lean<br/><i>∪' prelude</i>"]
+  F35["Factoid 3.5<br/><i>Factoid35.lean</i>"]
   D51["Definition 5.1<br/><i>Approximable.lean</i>"]
   D52["Definition 5.2<br/><i>Approximable.lean</i>"]
-  P53i["Prop 5.3(i)<br/>f(x) ∈ |B|"]
-  P53ii["Prop 5.3(ii)<br/>extensionality"]
-  P53iii["Prop 5.3(iii)<br/>pointwise order"]
-  P53iv["Prop 5.3(iv)<br/>monotonicity"]
-  F52b["Factoid 5.2b<br/>singleton reduction"]
-  P53v["Prop 5.3(v)<br/>u f v ↔ v̄ ⊆ f(ū)"]
+  P53i["Prop 5.3(i)<br/><i>Approximable.lean</i>"]
+  P53ii["Prop 5.3(ii)<br/><i>Proposition53.lean</i>"]
+  P53iii["Prop 5.3(iii)<br/><i>Proposition53.lean</i>"]
+  P53iv["Prop 5.3(iv)<br/><i>Approximable.lean</i>"]
+  Sing["Singleton reduction<br/><i>Approximable.lean</i>"]
+  P53v["Prop 5.3(v)<br/><i>Proposition53.lean</i>"]
   P54["Proposition 5.4<br/><i>Proposition54.lean</i>"]
   P55["Proposition 5.5<br/><i>Proposition55.lean</i>"]
-  P56["Proposition 5.6<br/>const b"]
+  P56["Proposition 5.6<br/><i>Proposition56.lean</i>"]
+  C --> D51
+  F35 --> D51
   D51 --> D52
   D52 --> P53i
   D52 --> P53iv
-  D51 --> F52b
-  F52b --> P53v
+  D51 --> Sing
+  Sing --> P53v
   D52 --> P53v
-  P53v --> P53iii --> P53ii
+  F35 --> P53v
+  P53v --> P53iii
+  P53iii --> P53ii
   D51 --> P54
   D51 --> P55
   D51 --> P56
   P54 --> P55
 ```
 
-Scott: (i)–(iv) follow from the bridge (v). Inventory lists clauses in numerical order;
-Factoid 5.2b sits immediately before 5.3(v) as its prep lemma.
+`Approximable.lean` imports `Constructive` and `Factoid35` (`closure`). Def 5.1–5.2 and
+5.3(i)/(iv) live there already; singleton reduction / 5.3(v)/(iii)/(ii) target
+`Proposition53.lean` (or stay in `Approximable`). Prop 5.5 imports Prop 5.4. Scott’s
+bridge (v) feeds (iii) then (ii); singleton reduction is prep for (v).
 
 #### Definition 5.1
 * **Mathematical Target:** Approximable mapping `f : A → B` as relation on `Con_A × Con_B` with
@@ -404,18 +412,19 @@ Factoid 5.2b sits immediately before 5.3(v) as its prep lemma.
 * **Lean File:** `Scott1982/Approximable.lean`
 * **Proof Notes:** **Pass** — `toElement_mono`.
 
-#### Factoid 5.2b
-* **Mathematical Target:** Singleton reduction (Scott’s remark before Def 5.2):
-  `u f v ↔ ∀ Y ∈ v, u f {Y}` (for `u ∈ Con_A`, `v ∈ Con_B`).
+#### Singleton reduction
+* **Mathematical Target:** Scott’s remark before Def 5.2: `u f v ↔ ∀ Y ∈ v, u f {Y}`
+  (for `u ∈ Con_A`, `v ∈ Con_B`).
 * **Lean File:** `Scott1982/Approximable.lean` / `Proposition53.lean`
 * **Proof Notes:** **Not Yet** — prep for 5.3(v); uses `mono` + `union_right` / `∪'`.
+  Unnumbered inventory row (not a Scott number; not worth inventing `5.2b`).
 
 #### Proposition 5.3(v)
 * **Mathematical Target:** Bridge lemma: `u f v ↔ v̄ ⊆ f(ū)` for `u ∈ Con_A`, `v ∈ Con_B`.
 * **Lean File:** `Scott1982/Proposition53.lean` (imports `Approximable`, `Factoid35`)
 * **Proof Notes:** **Not Yet** — main subgoal. → via `subset_closure` + `mono`; ← via
   `exists_rel_of_subset_image` on `ū` then strengthen LHS with `EntSet u u'` + `mono`.
-  Depends on Factoid 5.2b and Def 5.2.
+  Depends on singleton reduction and Def 5.2.
 
 #### Proposition 5.4
 * **Mathematical Target:** Identity `I_A` given by `u I v ↔ u ⊢ v`; `I(x) = x`.
