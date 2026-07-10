@@ -586,7 +586,9 @@ packages Scott’s CCC remark as a stretch goal using `Mathlib.CategoryTheory`.
 #### Proposition 7.4
 * **Mathematical Target:** Plotkin-style equational characterization of `fix`.
 * **Lean File:** `Scott1982/Proposition74.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — (ii) `fix(f) = f(fix(f))`; (iii) naturality for strict
+  commuting maps; uniqueness via the Theorem 7.3 least-fixed-point property.
+  Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 7.5
 * **Mathematical Target:** Strict function space `A →ₛ B` and `strict` operator; `A × A ≅ (BOOL →ₛ A)`.
