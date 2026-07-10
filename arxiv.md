@@ -447,22 +447,39 @@ imports Prop 5.4; Prop 5.6 imports Prop 5.3 (extensionality) and Prop 5.5 (compo
 
 ```mermaid
 flowchart TD
-  D61["Definition 6.1<br/>product A × B"]
-  P62["Proposition 6.2<br/>fst, snd, ⟨f,g⟩"]
-  D63["Definition 6.3<br/>separated sum A + B"]
-  P64["Proposition 6.4<br/>inl, inr, [f,g]"]
-  F65["Factoid 6.5<br/>unit domain 1"]
-  D61 --> P62 --> F65
+  C["Constructive.lean<br/><i>∪' prelude</i>"]
+  P23["Proposition 2.3<br/><i>Proposition23.lean</i>"]
+  Ap["Approximable.lean<br/><i>§5 maps</i>"]
+  D61["Definition 6.1<br/><i>Product.lean</i>"]
+  P62["Proposition 6.2<br/><i>Product.lean</i>"]
+  D63["Definition 6.3<br/><i>Sum.lean</i>"]
+  P64["Proposition 6.4<br/><i>Sum.lean</i>"]
+  F65["Factoid 6.5<br/><i>Factoid65.lean</i>"]
+  C --> D61
+  P23 --> D61
+  D61 --> P62
+  Ap --> P62
+  C --> D63
+  P23 --> D63
   D63 --> P64
+  Ap --> P64
+  P62 --> F65
+  P64 --> F65
 ```
+
+`Product.lean` (Def 6.1 / `productSystem`) imports `Constructive` and `Proposition23`.
+Prop 6.2’s approximable `fst`/`snd`/`⟨f,g⟩` will need `Approximable`. Sum is parallel
+(`Sum.lean`); Factoid 6.5 (unit domain) sits above both universal properties.
 
 #### Definition 6.1
 * **Mathematical Target:** Product information system `A × B` on tagged tokens.
 * **Lean File:** `Scott1982/Product.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `ProdToken` / `IsProdToken`; `prodBot`; `fstFinset` / `sndFinset`;
+  `ProdCon` / `ProdEnt`; `productSystem : InfoSys _` with all six Def 2.1 axioms. No `sorry`.
 
 #### Proposition 6.2
-* **Mathematical Target:** `A × B` is an information system; `fst`, `snd`, pairing `⟨f,g⟩` with universal property.
+* **Mathematical Target:** Approximable `fst`, `snd`, pairing `⟨f,g⟩` with universal property
+  (`A × B` as an `InfoSys` is already Def 6.1 / `productSystem`).
 * **Lean File:** `Scott1982/Product.lean` / `Proposition62.lean`
 * **Proof Notes:** **Not Yet**
 
@@ -615,6 +632,7 @@ this file.
 | `Scott1982/Proposition54.lean` | identity map |
 | `Scott1982/Proposition55.lean` | composition |
 | `Scott1982/Proposition56.lean` | constant maps |
+| `Scott1982/Product.lean` | Def 6.1 `productSystem` |
 | *(further files as inventory lands)* | |
 
 Vision transcript: `sources/Domains_for_Denotational_Semantics.md`.
