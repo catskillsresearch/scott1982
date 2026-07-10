@@ -603,7 +603,10 @@ packages Scott’s CCC remark as a stretch goal using `Mathlib.CategoryTheory`.
 #### Factoid 7.6
 * **Mathematical Target:** Combinators `const`, `pair`, `comp` as approximable operators.
 * **Lean File:** `Scott1982/Factoid76.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `constOp = curry fst` with `constOp_toElement`;
+  `pairOp` / `compOp` by currying `apply`–`fst`/`snd` composites;
+  `pairOp_toElement` / `compOp_toElement` recover `⟨f,g⟩` and `g ∘ f`.
+  Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 7.7
 * **Mathematical Target:** Scott’s CCC remark (*Categories again*): Props 6.2 and Theorem 7.2

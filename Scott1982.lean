@@ -26,5 +26,6 @@ import Scott1982.Theorem72
 import Scott1982.Fixpoint
 import Scott1982.Proposition74
 import Scott1982.Factoid75
+import Scott1982.Factoid76
 import Scott1982.Factoid77
 import Scott1982.DomainEquation
