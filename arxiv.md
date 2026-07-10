@@ -666,12 +666,13 @@ flowchart LR
 #### Factoid 8.2
 * **Mathematical Target:** λ-calculus model `D ≅ A + (D → D)` via mutual recursion of `D` and `Con`.
 * **Lean File:** `Scott1982/Factoid82.lean`
-* **Proof Notes:** **Partial** — choice-free well-founded **`LamConDepth`** (FunCon via
-  `termination_by` + `decidableEq_finset`) and inductive **`LamEntDepth`** (Scott (8)–(11),
-  FunEnt-style). Depth Def 2.1 fragments: `con_subset`/`con_sing` (empty/bot/atom),
-  `ent_bot`, **`ent_refl`** (`LamEntDepth_of_mem`), bot/atom `ent_con`, world-preserving
-  Ent weaken. Next: funTok `ent_con` (Prop 2.3(ii) + FunctionSpace filter-ne), `ent_trans`,
-  `lambdaSystem`, unfold. Axioms ⊆ `{propext, Quot.sound}`.
+* **Proof Notes:** **Partial** — choice-free well-founded **`LamConDepth`** / inductive
+  **`LamEntDepth`** (Scott (8)–(11)). Depth Def 2.1: `ent_refl`, **`ent_con`**
+  (`LamConDepth_insert_of_ent` for bot/atom/**funTok**, FunCon via filter-ne +
+  `funion_of_entSet`), world-safe Ent weaken, `hWorld`/`hInCompat` on funTok Ent
+  (blocks mixed-world FunCon gaps). Remaining: **`ent_trans`** (combined witness),
+  `lambdaSystem`, unfold into `sumSystem A (functionSystem D D)`. Axioms ⊆
+  `{propext, Quot.sound}`.
 
 #### Factoid 8.3
 * **Mathematical Target:** Universal domain remarks (`V`, retract `U`).
