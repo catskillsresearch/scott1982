@@ -15,6 +15,7 @@ import Scott1982.Approximable
 import Scott1982.Proposition53
 import Scott1982.Proposition54
 import Scott1982.Proposition55
+import Scott1982.Proposition56
 import Scott1982.Product
 import Scott1982.Sum
 import Scott1982.FunctionSpace

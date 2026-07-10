@@ -370,14 +370,14 @@ flowchart TD
   P53v --> P53iii
   P53iii --> P53ii
   D51 --> P54
-  D51 --> P55
-  D51 --> P56
   P54 --> P55
+  P53ii --> P56
+  P55 --> P56
 ```
 
-`Approximable.lean` imports `Constructive` and `Factoid35` (`closure`). Def 5.1–5.2 and
-5.3(i)/(iv) live there; singleton reduction and 5.3(v)/(iii)/(ii) are in `Proposition53.lean`.
-Prop 5.5 imports Prop 5.4. Scott’s bridge (v) feeds (iii) then (ii).
+`Approximable.lean` imports `Constructive` and `Factoid35`. Def 5.1–5.2 and 5.3(i)/(iv)
+live there; singleton reduction and 5.3(v)/(iii)/(ii) are in `Proposition53.lean`. Prop 5.5
+imports Prop 5.4; Prop 5.6 imports Prop 5.3 (extensionality) and Prop 5.5 (composition).
 
 #### Definition 5.1
 * **Mathematical Target:** Approximable mapping `f : A → B` as relation on `Con_A × Con_B` with
@@ -435,9 +435,11 @@ Prop 5.5 imports Prop 5.4. Scott’s bridge (v) feeds (iii) then (ii).
 * **Proof Notes:** **Pass**
 
 #### Proposition 5.6
-* **Mathematical Target:** Unique constant map `const b` with `(const b)(x) = b`.
+* **Mathematical Target:** Unique constant map `const b` with `(const b)(x) = b`;
+  also `f ∘ (const b) = const (f(b))` and `(const b) ∘ g = const b`.
 * **Lean File:** `Scott1982/Proposition56.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `constMap` via `u (const b) v ↔ ↑v ⊆ b`; `constMap_toElement`;
+  uniqueness via `ext_iff_toElement`; composition laws via `comp_toElement`. No `sorry`.
 
 ---
 
@@ -612,6 +614,7 @@ this file.
 | `Scott1982/Proposition53.lean` | Prop 5.3(ii)(iii)(v), singleton reduction |
 | `Scott1982/Proposition54.lean` | identity map |
 | `Scott1982/Proposition55.lean` | composition |
+| `Scott1982/Proposition56.lean` | constant maps |
 | *(further files as inventory lands)* | |
 
 Vision transcript: `sources/Domains_for_Denotational_Semantics.md`.
