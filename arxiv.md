@@ -520,13 +520,18 @@ Scott places it after the product remarks, before the sum construction.
 ### §7 The function space as a domain
 
 ```mermaid
-flowchart TD
+flowchart LR
   C["Constructive.lean<br/><i>∪' / decidableEq_finset</i>"]
   P23["Proposition 2.3<br/><i>Proposition23.lean</i>"]
-  Ap["Approximable.lean<br/><i>§5 maps</i>"]
-  D61["Definition 6.1<br/><i>Product.lean</i>"]
-  P62["Proposition 6.2<br/><i>Proposition62.lean</i>"]
+  P53["Proposition 5.3<br/><i>Proposition53.lean</i>"]
+  P54["Proposition 5.4<br/><i>Proposition54.lean</i>"]
+  P55["Proposition 5.5<br/><i>Proposition55.lean</i>"]
   P56["Proposition 5.6<br/><i>Proposition56.lean</i>"]
+  F25["Factoid 2.5<br/><i>Factoid25.lean</i>"]
+  F32["Factoid 3.2<br/><i>Factoid32.lean</i>"]
+  F33["Factoid 3.3<br/><i>Factoid33.lean</i>"]
+  F35["Factoid 3.5<br/><i>Factoid35.lean</i>"]
+  P62["Proposition 6.2<br/><i>Proposition62.lean</i>"]
   F65["Factoid 6.5<br/><i>Factoid65.lean</i>"]
   D71["Definition 7.1<br/><i>FunctionSpace.lean</i>"]
   T72["Theorem 7.2<br/><i>Theorem72.lean</i>"]
@@ -534,32 +539,41 @@ flowchart TD
   P74["Proposition 7.4<br/><i>Proposition74.lean</i>"]
   F75["Factoid 7.5<br/><i>Factoid75.lean</i>"]
   F76["Factoid 7.6<br/><i>Factoid76.lean</i>"]
-  F77["Factoid 7.7<br/><i>Factoid77.lean — CCC Pass</i>"]
+  F77["Factoid 7.7<br/><i>Factoid77.lean</i>"]
   CT["Mathlib CategoryTheory<br/><i>stretch; Classical.choice</i>"]
   C --> D71
   P23 --> D71
   D71 --> T72
-  Ap --> T72
-  D61 --> T72
+  P53 --> T72
+  P55 --> T72
   P62 --> T72
-  D71 --> T73
-  Ap --> T73
+  F32 --> T72
+  T72 --> T73
+  F33 --> T73
   T73 --> P74
+  P54 --> P74
+  P55 --> P74
+  F33 --> P74
+  F35 --> P74
+  D71 --> F75
   T72 --> F75
+  F25 --> F75
+  F33 --> F75
+  F35 --> F75
   T72 --> F76
   P56 --> F76
-  P62 --> F76
   T72 --> F77
   F65 --> F77
   CT --> F77
 ```
 
-`FunctionSpace.lean` (Def 7.1 / `functionSystem`) imports `Constructive` and
-`Proposition23` only. Theorem 7.2 needs approximable maps plus the product/pairing
-apparatus for `apply` / `curry`. Theorem 7.3 (`fix`) sits on the function space and
-approximable maps; Factoid 7.6 reuses `const` and `pair` as operators. Factoid 7.7
-packages Scott’s CCC remark as Mathlib `Category` / `CartesianMonoidalCategory` /
-`MonoidalClosed` (Scott data constructive; Mathlib packaging uses `Classical.choice`).
+`FunctionSpace.lean` (Def 7.1) imports `Constructive` and `Proposition23` only.
+Theorem 7.2 adds Prop 5.3/5.5, Prop 6.2 (`apply`/`curry` pairing), and Factoid 3.2.
+Theorem 7.3 (`fix`) sits on Theorem 7.2 plus Factoid 3.3 (`⊥`); Prop 7.4 adds
+identity/composition and closure. Factoid 7.5 reuses Factoid 2.5 (`BOOL`) for the
+conditional iso. Factoid 7.6 curries Prop 5.6/`pair` composites. Factoid 7.7 packages
+the CCC as Mathlib `Category` / `CartesianMonoidalCategory` / `MonoidalClosed`
+(Scott data constructive; Mathlib packaging uses `Classical.choice`).
 
 #### Definition 7.1
 * **Mathematical Target:** Function-space information system `A → B` with Scott's `Con`/`⊢` on pairs of consistent sets.
