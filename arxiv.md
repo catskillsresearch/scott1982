@@ -346,17 +346,31 @@ flowchart TD
 ```mermaid
 flowchart TD
   D51["Definition 5.1<br/><i>Approximable.lean</i>"]
-  D52["Definition 5.2<br/>image f(x)"]
-  P53["Proposition 5.3"]
-  P54["Proposition 5.4<br/>identity I_A"]
-  P55["Proposition 5.5<br/>composition"]
+  D52["Definition 5.2<br/><i>Approximable.lean</i>"]
+  P53i["Prop 5.3(i)<br/>f(x) ∈ |B|"]
+  P53ii["Prop 5.3(ii)<br/>extensionality"]
+  P53iii["Prop 5.3(iii)<br/>pointwise order"]
+  P53iv["Prop 5.3(iv)<br/>monotonicity"]
+  F52b["Factoid 5.2b<br/>singleton reduction"]
+  P53v["Prop 5.3(v)<br/>u f v ↔ v̄ ⊆ f(ū)"]
+  P54["Proposition 5.4<br/><i>Proposition54.lean</i>"]
+  P55["Proposition 5.5<br/><i>Proposition55.lean</i>"]
   P56["Proposition 5.6<br/>const b"]
-  D51 --> D52 --> P53
+  D51 --> D52
+  D52 --> P53i
+  D52 --> P53iv
+  D51 --> F52b
+  F52b --> P53v
+  D52 --> P53v
+  P53v --> P53iii --> P53ii
   D51 --> P54
   D51 --> P55
   D51 --> P56
   P54 --> P55
 ```
+
+Scott: (i)–(iv) follow from the bridge (v). Inventory lists clauses in numerical order;
+Factoid 5.2b sits immediately before 5.3(v) as its prep lemma.
 
 #### Definition 5.1
 * **Mathematical Target:** Approximable mapping `f : A → B` as relation on `Con_A × Con_B` with
@@ -367,13 +381,41 @@ flowchart TD
 #### Definition 5.2
 * **Mathematical Target:** `f(x) = {Y ∣ ∃ u ⊆ x, u f {Y}}`.
 * **Lean File:** `Scott1982/Approximable.lean`
-* **Proof Notes:** **Pass** — `toElement`; `exists_rel_of_subset_image`; `toElement_mono` (5.3(iv)).
+* **Proof Notes:** **Pass** — `toElement`; `exists_rel_of_subset_image`.
 
-#### Proposition 5.3
-* **Mathematical Target:** (i) `f(x)` is an element; (ii) extensionality via elements; (iii) pointwise order;
-  (iv) monotonicity; (v) `u f v ↔ v̄ ⊆ f(ū)`.
-* **Lean File:** `Scott1982/Approximable.lean` (partial) / `Proposition53.lean`
-* **Proof Notes:** **Partial** — (i) and (iv) via `toElement` / `toElement_mono`. (ii)(iii)(v) **Not Yet**.
+#### Proposition 5.3(i)
+* **Mathematical Target:** `f` maps elements to elements under Def 5.2 (`f(x) ∈ |B|`).
+* **Lean File:** `Scott1982/Approximable.lean`
+* **Proof Notes:** **Pass** — `toElement` (consistency + closure).
+
+#### Proposition 5.3(ii)
+* **Mathematical Target:** Extensionality: `f = g` iff `f(x) = g(x)` for all `x ∈ |A|`.
+* **Lean File:** `Scott1982/Proposition53.lean`
+* **Proof Notes:** **Not Yet** — from 5.3(iii) both ways + existing `ApproximableMap.ext`.
+
+#### Proposition 5.3(iii)
+* **Mathematical Target:** Pointwise order: `f ⊆ g` (as relations) iff `f(x) ⊆ g(x)` for all `x ∈ |A|`.
+* **Lean File:** `Scott1982/Proposition53.lean`
+* **Proof Notes:** **Not Yet** — define `≤` on `ApproximableMap` as relation inclusion; both
+  directions via 5.3(v) (→ also direct from Def 5.2).
+
+#### Proposition 5.3(iv)
+* **Mathematical Target:** Monotonicity: `x ⊆ y` in `|A|` implies `f(x) ⊆ f(y)` in `|B|`.
+* **Lean File:** `Scott1982/Approximable.lean`
+* **Proof Notes:** **Pass** — `toElement_mono`.
+
+#### Factoid 5.2b
+* **Mathematical Target:** Singleton reduction (Scott’s remark before Def 5.2):
+  `u f v ↔ ∀ Y ∈ v, u f {Y}` (for `u ∈ Con_A`, `v ∈ Con_B`).
+* **Lean File:** `Scott1982/Approximable.lean` / `Proposition53.lean`
+* **Proof Notes:** **Not Yet** — prep for 5.3(v); uses `mono` + `union_right` / `∪'`.
+
+#### Proposition 5.3(v)
+* **Mathematical Target:** Bridge lemma: `u f v ↔ v̄ ⊆ f(ū)` for `u ∈ Con_A`, `v ∈ Con_B`.
+* **Lean File:** `Scott1982/Proposition53.lean` (imports `Approximable`, `Factoid35`)
+* **Proof Notes:** **Not Yet** — main subgoal. → via `subset_closure` + `mono`; ← via
+  `exists_rel_of_subset_image` on `ū` then strengthen LHS with `EntSet u u'` + `mono`.
+  Depends on Factoid 5.2b and Def 5.2.
 
 #### Proposition 5.4
 * **Mathematical Target:** Identity `I_A` given by `u I v ↔ u ⊢ v`; `I(x) = x`.
