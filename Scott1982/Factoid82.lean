@@ -1403,6 +1403,37 @@ theorem LamConDepth_insert_atom {u : Finset (RawLamToken α)} {x : α}
       rw [lamAtomFinset_insert_atom]
       exact A.ent_con hEnt)
 
+/-- Weaken entailment when the larger set stays in the function world (`atom = ∅`). -/
+theorem LamEntDepth_weaken_fun {u v : Finset (RawLamToken α)} {t : RawLamToken α}
+    (huv : u ⊆ v) (hv : LamConDepth A v) (hAv : lamAtomFinset v = ∅)
+    (ht : LamEntDepth A u t) : LamEntDepth A v t := by
+  cases ht with
+  | bot _ => exact LamEntDepth.bot hv
+  | atom _ _ hne _ =>
+    obtain ⟨x, hx⟩ := Finset.nonempty_of_ne_empty hne
+    exact False.elim (Finset.notMem_empty x (by
+      have := lamAtomFinset_mono huv hx; rwa [hAv] at this))
+  | funTok _ _ hConIn hConOut hs hEntIn hEntOut =>
+    exact LamEntDepth.funTok hv hAv hConIn hConOut
+      (fun p hp => lamFunFinset_mono huv (hs hp)) hEntIn hEntOut
+
+/-- Weaken atom-entailment when the larger set stays in the atom world (`fun = ∅`). -/
+theorem LamEntDepth_weaken_atom {u v : Finset (RawLamToken α)} {x : α}
+    (huv : u ⊆ v) (hv : LamConDepth A v) (hFv : lamFunFinset v = ∅)
+    (ht : LamEntDepth A u (.atom x)) : LamEntDepth A v (.atom x) := by
+  cases ht with
+  | atom hu hF hne hEnt =>
+    have hsubA := lamAtomFinset_mono huv
+    have hne' : lamAtomFinset v ≠ ∅ := by
+      intro hAv
+      obtain ⟨y, hy⟩ := Finset.nonempty_of_ne_empty hne
+      exact Finset.notMem_empty y (by have := hsubA hy; rwa [hAv] at this)
+    exact LamEntDepth.atom hv hFv hne'
+      (A.ent_trans ((LamConDepth_of_fun_empty A hFv).1 hv)
+        ((LamConDepth_of_fun_empty A hF).1 hu)
+        (fun y hy => A.ent_refl ((LamConDepth_of_fun_empty A hFv).1 hv) (hsubA hy))
+        hEnt)
+
 end InfoSys
 
 end Scott1982
