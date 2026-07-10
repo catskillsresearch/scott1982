@@ -571,7 +571,10 @@ packages Scott’s CCC remark as a stretch goal using `Mathlib.CategoryTheory`.
 #### Theorem 7.2
 * **Mathematical Target:** Elements of `|A → B|` = approximable maps; `apply` and `curry`.
 * **Lean File:** `Scott1982/Theorem72.lean`
-* **Proof Notes:** **Not Yet** — `functionSystem` (InfoSys axioms) is Def 7.1 / `FunctionSpace.lean`.
+* **Proof Notes:** **Pass** — bijection `approxMap_toElement` / `element_toApproxMap`;
+  approximable `applyMap` and `curryMap`; `apply(g,y) = g(y)`;
+  `uncurry ∘ curry = id` with uniqueness of `curry`. Axioms ⊆ `{propext, Quot.sound}`.
+  No `sorry`.
 
 #### Theorem 7.3
 * **Mathematical Target:** Least fixed-point operator `fix : (A → A) → A`.
