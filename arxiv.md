@@ -647,7 +647,7 @@ flowchart LR
   P64["Proposition 6.4<br/><i>Sum</i>"]
   F81["Factoid 8.1<br/><i>Factoid81.lean — trees</i>"]
   F82["Factoid 8.2<br/><i>Factoid82.lean — λ-model</i>"]
-  F83["Factoid 8.3<br/>universal V / U"]
+  F83["Factoid 8.3<br/><i>Factoid83.lean — universal V / U</i>"]
   F84["Factoid 8.4<br/>domain of domains"]
   P62 --> F81
   P64 --> F81
@@ -677,7 +677,13 @@ flowchart LR
 #### Factoid 8.3
 * **Mathematical Target:** Universal domain remarks (`V`, retract `U`).
 * **Lean File:** `Scott1982/Factoid83.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `VToken` (Scott (1)–(2): `Δ`/`∇`/`pairL`/`pairR`);
+  all finite sets consistent; inductive **`VEnt`** (3)–(6); `vSystem : InfoSys VToken`;
+  `vUnfold` / `vRhs` into `productSystem vSystem vSystem` (`V ≅ V × V`);
+  `UToken = D_V \ {∇}` with **`UCon`** = `⊬_V ∇` and **`UEnt`** from `VEnt`
+  (7)–(10); `uSystem : InfoSys UToken`. Scott’s retract/universality theorem
+  (every countably based domain is a retract of `U`) is stated without proof in
+  the source and left external. Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 8.4
 * **Mathematical Target:** Domain of domains via approximable maps on `P` satisfying (1)–(5).
