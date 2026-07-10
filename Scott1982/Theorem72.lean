@@ -55,7 +55,7 @@ private theorem funion_comm_β (u v : Finset β) : u ∪' v = v ∪' u := by
     · exact mem_funion.mpr (Or.inr h)
     · exact mem_funion.mpr (Or.inl h)
 
-private theorem rel_input_output_union (f : ApproximableMap A B)
+theorem rel_input_output_union (f : ApproximableMap A B)
     (s : Finset (FunToken A B))
     (hrel : ∀ q ∈ s, f.rel q.val.1 q.val.2)
     (hin : funInputUnion A B s ∈ A.Con) :
