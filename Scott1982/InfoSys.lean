@@ -35,6 +35,8 @@ This is the **1982** presentation; the development is kept choice-free (construc
 matching Scott's emphasis on the constructive nature of the definitions.
 -/
 
+namespace Scott1982
+
 /-- A Scott information system on a type of tokens `α`, following Scott's Definition 2.1
 in *"Domains for Denotational Semantics"* (ICALP 1982).
 
@@ -96,3 +98,5 @@ instance : PartialOrder sys.Element where
     rfl
 
 end InfoSys
+
+end Scott1982

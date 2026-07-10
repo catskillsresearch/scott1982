@@ -1,2 +1,15 @@
 import Scott1982.Constructive
 import Scott1982.InfoSys
+import Scott1982.Definition22
+import Scott1982.Proposition23
+import Scott1982.Factoid32
+import Scott1982.Factoid33
+import Scott1982.Factoid35
+import Scott1982.Approximable
+import Scott1982.Proposition54
+import Scott1982.Proposition55
+import Scott1982.Product
+import Scott1982.Sum
+import Scott1982.FunctionSpace
+import Scott1982.Fixpoint
+import Scott1982.DomainEquation

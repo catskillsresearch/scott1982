@@ -1,36 +1,11 @@
 ---
 source_pdf: Domains_for_Denotational_Semantics.pdf
-title: "Domains for Denotational Semantics"
-author: Dana Scott
-year: 1982
-citation_key: Sco82
-alias: "Information systems presentation (ICALP 1982)"
-bibliography: "Scott, D. Domains for Denotational Semantics. ICALP 1982, LNCS 140, pp. 577–613."
-pages: 34
-extraction_method: "cursor-vision-triple-merge"
+ocr_method: cursor-vision-triple-merge
 verification_status: draft
-verified_by: null
-verified_date: null
 ---
 
-# Domains for Denotational Semantics
+# Transcription (LLM vision OCR)
 
-**Author:** Dana Scott (1982)  
-**Source file:** `Domains_for_Denotational_Semantics.pdf`  
-**Also known as:** Information systems presentation (ICALP 1982)
-
-> **Human verification required.** This file is a machine-generated *draft* from
-> Cursor vision OCR (3 passes + merge). Compare each `<!-- page N -->` block to
-> the PDF. Correct remaining errors, restore any missed mathematical notation,
-> and when done set `verification_status: verified` in the YAML front matter.
-
-## Bibliography
-
-Scott, D. Domains for Denotational Semantics. ICALP 1982, LNCS 140, pp. 577–613.
-
----
-
-## Transcription
 
 <!-- page 1 -->
 
