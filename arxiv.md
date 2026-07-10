@@ -593,7 +593,10 @@ packages Scott’s CCC remark as a stretch goal using `Mathlib.CategoryTheory`.
 #### Factoid 7.5
 * **Mathematical Target:** Strict function space `A →ₛ B` and `strict` operator; `A × A ≅ (BOOL →ₛ A)`.
 * **Lean File:** `Scott1982/Factoid75.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Partial** — `IsStrict`; `strictify` (Scott’s `strict`) as approximable map,
+  with `IsStrict_strictify` and `strictify_toElement_le`; flat `boolSystem` via
+  `ofSatisfaction`. Remaining: InfoSys `A →ₛ B` and the conditional isomorphism.
+  Axioms ⊆ `{propext, Quot.sound}` on completed parts. No `sorry`.
 
 #### Factoid 7.6
 * **Mathematical Target:** Combinators `const`, `pair`, `comp` as approximable operators.
