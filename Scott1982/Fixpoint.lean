@@ -1,3 +1,4 @@
+import Scott1982.Approximable
 import Scott1982.FunctionSpace
 
 /-!

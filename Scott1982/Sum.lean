@@ -1,4 +1,6 @@
+import Scott1982.Constructive
 import Scott1982.Approximable
+import Scott1982.Proposition23
 
 /-!
 # Separated sum of information systems — Definition 6.3 / Proposition 6.4

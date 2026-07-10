@@ -1,3 +1,4 @@
+import Scott1982.Product
 import Scott1982.Sum
 import Scott1982.FunctionSpace
 

@@ -1,4 +1,6 @@
+import Scott1982.Constructive
 import Scott1982.Approximable
+import Scott1982.Proposition23
 
 /-!
 # Product of information systems — Definition 6.1 / Proposition 6.2

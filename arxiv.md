@@ -72,6 +72,7 @@ Named concepts get section-style modules; unnamed numbered results get `Definiti
 flowchart TD
   C["Constructive.lean"]
   IS["InfoSys.lean<br/>Def 2.1, Def 3.1"]
+  F2["Factoid2*.lean<br/>§2 examples"]
   D22["Definition22.lean"]
   P23["Proposition23.lean"]
   F3["Factoid3*.lean<br/>⊥, closure, …"]
@@ -85,7 +86,9 @@ flowchart TD
   DE["DomainEquation.lean<br/>§8 constructions"]
 
   C --> IS
+  IS --> F2
   IS --> D22 --> P23
+  C --> P23
   IS --> F3
   F3 --> F4
   IS --> Ap
@@ -158,17 +161,23 @@ flowchart LR
 
 ```mermaid
 flowchart TD
+  C["Constructive.lean<br/><i>∪' prelude</i>"]
   D21["Definition 2.1<br/><i>InfoSys.lean</i>"]
-  ExA["Factoid 2.4<br/>ℕ lower-bound example"]
-  ExB["Factoid 2.5<br/>interval example"]
-  ExC["Factoid 2.6<br/>partial-function example"]
+  ExA["Factoid 2.4<br/><i>Factoid24.lean</i>"]
+  ExB["Factoid 2.5<br/><i>Factoid25.lean</i>"]
+  ExC["Factoid 2.6<br/><i>Factoid26.lean</i>"]
   D22["Definition 2.2<br/><i>Definition22.lean</i>"]
   P23["Proposition 2.3<br/><i>Proposition23.lean</i>"]
   D21 --> ExA
   D21 --> ExB
   D21 --> ExC
-  D21 --> D22 --> P23
+  D21 --> D22
+  D22 --> P23
+  C --> P23
 ```
+
+Paper order: examples sit between Def 2.1 and Def 2.2; Lean matches that — each
+`Factoid2*.lean` imports only `InfoSys`. Prop 2.3 also needs `Constructive` for `∪'`.
 
 #### Definition 2.1
 * **Mathematical Target:** Information system `(D, Δ, Con, ⊢)` with Scott's six axioms (i)–(vi).
@@ -207,7 +216,9 @@ flowchart TD
 #### Factoid 2.6
 * **Mathematical Target:** Third example: partial functions `A ⇀ B` as graphs plus `Δ`.
 * **Lean File:** `Scott1982/Factoid26.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** **Pass** — `Token A B = bot ⊕ (A × B)`; `Consistent` = functional on pairs;
+  minimal `Ent` (`X = Δ ∨ X ∈ u`) with LHS consistency; `partialFunctionSystem A B` plus
+  `example` on `ℕ`/`Bool`. No `sorry`.
 
 ---
 
@@ -534,6 +545,7 @@ builds `arxiv_with_code.md` from this file plus the Lean source.
 | `Scott1982/Proposition23.lean` | Prop 2.3 |
 | `Scott1982/Factoid24.lean` | Factoid 2.4 ℕ lower-bound example |
 | `Scott1982/Factoid25.lean` | Factoid 2.5 interval example |
+| `Scott1982/Factoid26.lean` | Factoid 2.6 partial-function example |
 | `Scott1982/Factoid32.lean` | Δ ∈ every element |
 | `Scott1982/Factoid33.lean` | ⊥ least |
 | `Scott1982/Factoid35.lean` | finite closure `ū` |
