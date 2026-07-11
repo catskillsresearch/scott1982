@@ -11,6 +11,11 @@ import Scott1982.Factoid34
 import Scott1982.Factoid35
 import Scott1982.Factoid36
 import Scott1982.Factoid41
+import Scott1982.Factoid42
+import Scott1982.Factoid43
+import Scott1982.Factoid44
+import Scott1982.Factoid45
+import Scott1982.Factoid46
 import Scott1982.Approximable
 import Scott1982.Proposition53
 import Scott1982.Proposition54

@@ -36,15 +36,15 @@ equations (trees / S-expressions, λ-calculus models, universal domains).
 ### Paper section dependency
 
 Edges follow Scott's narrative dependencies. Lean import graphs for §§2–3 and §§5–8 are
-stable (see per-section diagrams below); §4 remains mostly unfinished (only Factoid 4.1 is mechanized),
-so the dashed §4 edges stay advisory.
+stable (see per-section diagrams below); §4 Factoids 4.1–4.6 are mechanized
+(the dashed §4→§5 edge remains advisory: later sections do not import §4).
 
 ```mermaid
 flowchart TB
   S1["§1 Introduction<br/><i>motivation only</i>"]
   S2["§2 Information systems<br/><i>Def 2.1–2.2, Prop 2.3, Factoids 2.4–2.6</i>"]
   S3["§3 Elements<br/><i>Def 3.1, Factoids 3.2–3.6</i>"]
-  S4["§4 Lattices & topology<br/><i>Factoid 4.1 done; 4.2–4.6 Not Yet</i>"]
+  S4["§4 Lattices & topology<br/><i>Factoids 4.1–4.6</i>"]
   S5["§5 Approximable mappings<br/><i>Def 5.1–5.2, Prop 5.3–5.6</i>"]
   S6["§6 Products & sums<br/><i>Def 6.1/6.3, Prop 6.2/6.4, Factoid 6.5</i>"]
   S7["§7 Function space<br/><i>Def 7.1, Thm 7.2–7.3, Prop 7.4, Factoids 7.5–7.7</i>"]
@@ -78,7 +78,7 @@ flowchart TD
   D22["Definition22.lean"]
   P23["Proposition23.lean"]
   F3["Factoid3*.lean<br/>⊥, closure, …"]
-  F4["Factoid4*.lean<br/>4.1 done; 4.2–4.6 Not Yet"]
+  F4["Factoid4*.lean<br/>meets, joins, cpo, algebraicity, topology"]
   Ap["Approximable.lean<br/>Def 5.1–5.2"]
   P5["Proposition5*.lean"]
   Pr["Product.lean / Proposition62.lean<br/>Def 6.1, Prop 6.2"]
@@ -299,21 +299,28 @@ Def 3.1 (`Element`) lives in `InfoSys.lean` with Def 2.1. Factoids 3.2/3.5 impor
 
 ### §4 Domains as lattices and as topological spaces
 
-Informal section; elevated claims are Factoids. Lean dependencies provisional.
+Scott keeps §4 informal (bridge to lattice/topology presentations). Elevated claims are
+Factoids; Lean edges below match imports. Later sections (§5–§8) do not depend on these
+modules.
 
 ```mermaid
 flowchart TD
   F33["Factoid 3.3<br/><i>⊥ / Factoid33.lean</i>"]
+  F35["Factoid 3.5<br/><i>ū / Factoid35.lean</i>"]
+  F36["Factoid 3.6<br/><i>Factoid36.lean</i>"]
   F41["Factoid 4.1<br/><i>Factoid41.lean</i>"]
-  F42["Factoid 4.2<br/>conditional complete meets<br/><i>Not Yet</i>"]
-  F43["Factoid 4.3<br/>consistent joins<br/><i>Not Yet</i>"]
-  F44["Factoid 4.4<br/>chain / directed lubs<br/><i>Not Yet</i>"]
-  F45["Factoid 4.5<br/>algebraicity via ū<br/><i>Not Yet</i>"]
-  F46["Factoid 4.6<br/>Scott topology sketch<br/><i>Not Yet</i>"]
-  F33 --> F41
-  F41 --> F42 --> F43
-  F41 --> F44 --> F45
+  F42["Factoid 4.2<br/><i>Factoid42.lean — familyInf</i>"]
+  F43["Factoid 4.3<br/><i>Factoid43.lean — joins</i>"]
+  F44["Factoid 4.4<br/><i>Factoid44.lean — directedSup</i>"]
+  F45["Factoid 4.5<br/><i>Factoid45.lean — algebraicity</i>"]
+  F46["Factoid 4.6<br/><i>Factoid46.lean — Scott topology</i>"]
+  Ap["Approximable.lean<br/><i>Def 5.1–5.2</i>"]
+  F33 --> F41 --> F42 --> F43 --> F44
+  F36 --> F45
+  F44 --> F45
+  F35 --> F45
   F45 --> F46
+  Ap --> F46
 ```
 
 #### Factoid 4.1
@@ -325,27 +332,33 @@ flowchart TD
 #### Factoid 4.2
 * **Mathematical Target:** Nonempty families of elements have set-theoretic intersections that are elements.
 * **Lean File:** `Scott1982/Factoid42.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** `familyInf` / `familyInf_le` / `le_familyInf`; agrees with binary `inf`
+  via `familyInf_pair`. Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 4.3
 * **Mathematical Target:** Join of a family exists in `|A|` iff the union is consistent; then join = deductive closure of the union.
 * **Lean File:** `Scott1982/Factoid43.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** `IsFinitelyConsistent` / `deductiveClosure` / `familySup` / binary `join`;
+  `exists_isLUB_iff` / `exists_join_iff`. Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 4.4
 * **Mathematical Target:** Directed (in particular chain) unions of elements are elements (cpo).
 * **Lean File:** `Scott1982/Factoid44.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** `IsDirected` / `IsChain`; `directedSup` with carrier = raw union;
+  `chainSup`. Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 4.5
 * **Mathematical Target:** Finite elements `ū` are compact; every element is directed lub of finite elements below it (algebraicity).
 * **Lean File:** `Scott1982/Factoid45.lean`
-* **Proof Notes:** **Not Yet**
+* **Proof Notes:** `finiteApproximants` directed; `eq_directedSup_finiteApproximants`;
+  `compact_closure`. Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 4.6
-* **Mathematical Target:** Scott topology via basic opens `{x ∣ X ∈ x}`; approximable maps = continuous maps (statement-level bridge).
+* **Mathematical Target:** Scott topology via basic opens `{x ∣ u ⊆ x}`; approximable maps = Scott-continuous maps.
 * **Lean File:** `Scott1982/Factoid46.lean`
-* **Proof Notes:** **Not Yet** — full topology may borrow patterns from continuous-lattice work copied into this repo if needed.
+* **Proof Notes:** `basicOpen` / `basicOpen_inter` / `T₀`; `ScottContinuous`;
+  `toScottContinuous` / `ofScottContinuous` / `toElement_ofScottContinuous`.
+  Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 ---
 
@@ -781,6 +794,11 @@ in the arXiv PDF). Order matches
 * [Factoid35.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid35.lean)
 * [Factoid36.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid36.lean)
 * [Factoid41.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid41.lean)
+* [Factoid42.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid42.lean)
+* [Factoid43.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid43.lean)
+* [Factoid44.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid44.lean)
+* [Factoid45.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid45.lean)
+* [Factoid46.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid46.lean)
 * [Approximable.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Approximable.lean)
 * [Proposition53.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition53.lean)
 * [Proposition54.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition54.lean)
