@@ -18,9 +18,6 @@ the law of excluded middle. Every completed module is audited with `#print axiom
 target footprint is `#print axioms ⊆ {propext, Quot.sound}`. Choice-tainted mathlib `Finset`
 operations are replaced by the prelude in `Scott1982/Constructive.lean`.
 
-**Inventory source of truth:** this file (`arxiv.md`). Status values: **Pass** (mechanized,
-builds green, zero `sorry`), **Partial**, **Not Yet**, **Deferred**.
-
 ---
 
 ## Introduction
@@ -39,15 +36,15 @@ equations (trees / S-expressions, λ-calculus models, universal domains).
 ### Paper section dependency
 
 Edges follow Scott's narrative dependencies. Lean import graphs for §§2–3 and §§5–8 are
-stable (see per-section diagrams below); §4 remains mostly **Not Yet** (only Factoid 4.1
-Pass), so the dashed §4 edges stay advisory.
+stable (see per-section diagrams below); §4 remains mostly unfinished (only Factoid 4.1 is mechanized),
+so the dashed §4 edges stay advisory.
 
 ```mermaid
 flowchart TB
   S1["§1 Introduction<br/><i>motivation only</i>"]
   S2["§2 Information systems<br/><i>Def 2.1–2.2, Prop 2.3, Factoids 2.4–2.6</i>"]
   S3["§3 Elements<br/><i>Def 3.1, Factoids 3.2–3.6</i>"]
-  S4["§4 Lattices & topology<br/><i>Factoid 4.1 Pass; 4.2–4.6 Not Yet</i>"]
+  S4["§4 Lattices & topology<br/><i>Factoid 4.1 done; 4.2–4.6 Not Yet</i>"]
   S5["§5 Approximable mappings<br/><i>Def 5.1–5.2, Prop 5.3–5.6</i>"]
   S6["§6 Products & sums<br/><i>Def 6.1/6.3, Prop 6.2/6.4, Factoid 6.5</i>"]
   S7["§7 Function space<br/><i>Def 7.1, Thm 7.2–7.3, Prop 7.4, Factoids 7.5–7.7</i>"]
@@ -81,7 +78,7 @@ flowchart TD
   D22["Definition22.lean"]
   P23["Proposition23.lean"]
   F3["Factoid3*.lean<br/>⊥, closure, …"]
-  F4["Factoid4*.lean<br/>4.1 Pass; 4.2–4.6 Not Yet"]
+  F4["Factoid4*.lean<br/>4.1 done; 4.2–4.6 Not Yet"]
   Ap["Approximable.lean<br/>Def 5.1–5.2"]
   P5["Proposition5*.lean"]
   Pr["Product.lean / Proposition62.lean<br/>Def 6.1, Prop 6.2"]
@@ -159,15 +156,6 @@ mathematics in a portable form, we **copy** the Lean into this repo (adapted to 
 `Finset` as needed) rather than depending on sibling packages. Cross-presentation equivalence
 theorems remain in `scott_models`.
 
-### Status vocabulary
-
-| Status | Meaning |
-|--------|---------|
-| **Pass** | Mechanized, `lake build` green, zero `sorry` |
-| **Partial** | Core done; documented gaps remain |
-| **Not Yet** | Inventory row present; Lean not started |
-| **Deferred** | Explicitly out of scope for now (with reason) |
-
 ---
 
 ## Chronological Formalization Narrative
@@ -208,33 +196,33 @@ Paper order: examples sit between Def 2.1 and Def 2.2; Lean matches that — eac
 #### Definition 2.1
 * **Mathematical Target:** Information system `(D, Δ, Con, ⊢)` with Scott's six axioms (i)–(vi).
 * **Lean File:** `Scott1982/InfoSys.lean` (`structure InfoSys`)
-* **Proof Notes:** **Pass** — structure fields `con_subset`, `con_sing`, `ent_con`, `ent_bot`,
+* **Proof Notes:** structure fields `con_subset`, `con_sing`, `ent_con`, `ent_bot`,
   `ent_refl`, `ent_trans`. Uses `insert` (not mathlib `∪`) in `ent_con` for choice-freedom.
   Footprint target `{propext, Quot.sound}`.
 
 #### Definition 2.2
 * **Mathematical Target:** For `u, v ∈ Con`, write `u ⊢ v` to mean `u ⊢ X` for all `X ∈ v`.
 * **Lean File:** `Scott1982/Definition22.lean`
-* **Proof Notes:** **Pass** — `InfoSys.EntSet`.
+* **Proof Notes:** `InfoSys.EntSet`.
 
 #### Proposition 2.3
 * **Mathematical Target:** For `u, v, w, u', v' ∈ Con`: (i) `∅ ⊢ {Δ}`; (ii) `u ⊢ v ⇒ u ∪ v ∈ Con`;
   (iii) `u ⊢ u`; (iv) transitivity; (v) monotonicity; (vi) `u ⊢ v ∧ u ⊢ v' ⇒ u ⊢ v ∪ v'`.
 * **Lean File:** `Scott1982/Proposition23.lean`
-* **Proof Notes:** **Pass** — uses `∪'` from `Constructive.lean` for (ii) and (vi).
+* **Proof Notes:** uses `∪'` from `Constructive.lean` for (ii) and (vi).
 
 #### Factoid 2.4
 * **Mathematical Target:** First example: `D = ℕ`, `Δ = 0`, all finite sets consistent,
   `{nᵢ} ⊢ m` iff `m = 0 ∨ ∃ i, m ≤ nᵢ`.
 * **Lean File:** `Scott1982/Factoid24.lean`
-* **Proof Notes:** **Pass** — `example : InfoSys ℕ` with `lowerBoundEnt`; axioms (i)–(iii)
+* **Proof Notes:** `example : InfoSys ℕ` with `lowerBoundEnt`; axioms (i)–(iii)
   trivial (`Con = univ`); (iv) `0`-bot; (v) reflexivity via `le_rfl`; (vi) cut by chaining
   `≤` through the witness in `u`. Imports only `InfoSys` (Def 2.1 apparatus). No `sorry`.
 
 #### Factoid 2.5
 * **Mathematical Target:** Second example: open intervals `(n, m)` with `n < m`, plus `(0, ∞)`.
 * **Lean File:** `Scott1982/Factoid25.lean`
-* **Proof Notes:** **Pass** — `Token = bot ⊕ strict intervals`; satisfaction on `ℚ`;
+* **Proof Notes:** `Token = bot ⊕ strict intervals`; satisfaction on `ℚ`;
   `ofSatisfaction` builds any Scott-style semantic `InfoSys` from `Sat` + true `bot` +
   inhabited singletons. `Ent` pairs consistency of the LHS with `∀`-entailment (so `ent_con`
   is not vacuous). Midpoint witness for singletons. No `sorry`.
@@ -242,7 +230,7 @@ Paper order: examples sit between Def 2.1 and Def 2.2; Lean matches that — eac
 #### Factoid 2.6
 * **Mathematical Target:** Third example: partial functions `A ⇀ B` as graphs plus `Δ`.
 * **Lean File:** `Scott1982/Factoid26.lean`
-* **Proof Notes:** **Pass** — `Token A B = bot ⊕ (A × B)`; `Consistent` = functional on pairs;
+* **Proof Notes:** `Token A B = bot ⊕ (A × B)`; `Consistent` = functional on pairs;
   minimal `Ent` (`X = Δ ∨ X ∈ u`) with LHS consistency; `partialFunctionSystem A B` plus
   `example` on `ℕ`/`Bool`. No `sorry`.
 
@@ -278,35 +266,32 @@ Def 3.1 (`Element`) lives in `InfoSys.lean` with Def 2.1. Factoids 3.2/3.5 impor
 * **Mathematical Target:** Elements `|A|`: subsets `x ⊆ D` with (i) every finite subset in `Con`,
   (ii) closed under entailment. Total elements `Tot_A`.
 * **Lean File:** `Scott1982/InfoSys.lean` (`InfoSys.Element`, `PartialOrder`)
-* **Proof Notes:** **Pass** — `Element` / `PartialOrder`; `IsTotal` / top via Factoid 3.4.
+* **Proof Notes:** `Element` / `PartialOrder`; `IsTotal` / top via Factoid 3.4.
 
 #### Factoid 3.2
 * **Mathematical Target:** Every element contains `Δ`.
 * **Lean File:** `Scott1982/Factoid32.lean`
-* **Proof Notes:** **Pass**
 
 #### Factoid 3.3
 * **Mathematical Target:** `⊥_A = {X ∣ {Δ} ⊢ X}` is the least element.
 * **Lean File:** `Scott1982/Factoid33.lean`
-* **Proof Notes:** **Pass**
 
 #### Factoid 3.4
 * **Mathematical Target:** Top `⊤ = D` exists iff all finite subsets are consistent; then unique total.
 * **Lean File:** `Scott1982/Factoid34.lean`
-* **Proof Notes:** **Pass** — `IsTotal` (maximal); `AllConsistent`; `topElement` with carrier `Set.univ`;
+* **Proof Notes:** `IsTotal` (maximal); `AllConsistent`; `topElement` with carrier `Set.univ`;
   `exists_top_iff_allConsistent`; uniqueness `eq_topElement_of_isTotal` /
   `exists_unique_total_of_allConsistent`. No `sorry`.
 
 #### Factoid 3.5
 * **Mathematical Target:** Closure `ū = {X ∣ u ⊢ X}` of `u ∈ Con` is an element (finite element).
 * **Lean File:** `Scott1982/Factoid35.lean`
-* **Proof Notes:** **Pass**
 
 #### Factoid 3.6
 * **Mathematical Target:** Every element is the directed union of its finite approximations:
   `x = ⋃{ū ∣ u ⊆ x, u ∈ Con}`.
 * **Lean File:** `Scott1982/Factoid36.lean`
-* **Proof Notes:** **Pass** — `approxUnion` / `element_eq_approxUnion` (via singleton witnesses and
+* **Proof Notes:** `approxUnion` / `element_eq_approxUnion` (via singleton witnesses and
   entailment closure); `closures_directed` using `∪'`; helpers `closure_le_of_entSet`,
   `closure_le_of_subset`, `closure_le_element`. No `sorry`.
 
@@ -319,7 +304,7 @@ Informal section; elevated claims are Factoids. Lean dependencies provisional.
 ```mermaid
 flowchart TD
   F33["Factoid 3.3<br/><i>⊥ / Factoid33.lean</i>"]
-  F41["Factoid 4.1<br/><i>Factoid41.lean — Pass</i>"]
+  F41["Factoid 4.1<br/><i>Factoid41.lean</i>"]
   F42["Factoid 4.2<br/>conditional complete meets<br/><i>Not Yet</i>"]
   F43["Factoid 4.3<br/>consistent joins<br/><i>Not Yet</i>"]
   F44["Factoid 4.4<br/>chain / directed lubs<br/><i>Not Yet</i>"]
@@ -334,7 +319,7 @@ flowchart TD
 #### Factoid 4.1
 * **Mathematical Target:** `|A|` is an inf-semilattice under `∩`; `x ⊆ y ↔ x ∩ y = x`.
 * **Lean File:** `Scott1982/Factoid41.lean`
-* **Proof Notes:** **Pass** — `inf` via carrier `∩`; `inf_le_left`/`right`, `le_inf`, `le_iff_inf_eq`;
+* **Proof Notes:** `inf` via carrier `∩`; `inf_le_left`/`right`, `le_inf`, `le_iff_inf_eq`;
   idempotent/commutative/associative; `botElement_inf`. No `sorry`.
 
 #### Factoid 4.2
@@ -406,62 +391,60 @@ imports Prop 5.4; Prop 5.6 imports Prop 5.3 (extensionality) and Prop 5.5 (compo
 * **Mathematical Target:** Approximable mapping `f : A → B` as relation on `Con_A × Con_B` with
   (i) `∅ f ∅`; (ii) `u f v ∧ u f v' ⇒ u f (v ∪ v')`; (iii) `u' ⊢ u`, `u f v`, `v ⊢ v' ⇒ u' f v'`.
 * **Lean File:** `Scott1982/Approximable.lean`
-* **Proof Notes:** **Pass** (structure). Adapted from PRG-19 `ApproximableMap` pattern, rewritten for `Finset`/`Con`.
+* **Proof Notes:** Structure. Adapted from PRG-19 `ApproximableMap` pattern, rewritten for `Finset`/`Con`.
 
 #### Definition 5.2
 * **Mathematical Target:** `f(x) = {Y ∣ ∃ u ⊆ x, u f {Y}}`.
 * **Lean File:** `Scott1982/Approximable.lean`
-* **Proof Notes:** **Pass** — `toElement`; `exists_rel_of_subset_image`.
+* **Proof Notes:** `toElement`; `exists_rel_of_subset_image`.
 
 #### Proposition 5.3(i)
 * **Mathematical Target:** `f` maps elements to elements under Def 5.2 (`f(x) ∈ |B|`).
 * **Lean File:** `Scott1982/Approximable.lean`
-* **Proof Notes:** **Pass** — `toElement` (consistency + closure).
+* **Proof Notes:** `toElement` (consistency + closure).
 
 #### Proposition 5.3(ii)
 * **Mathematical Target:** Extensionality: `f = g` iff `f(x) = g(x)` for all `x ∈ |A|`.
 * **Lean File:** `Scott1982/Proposition53.lean`
-* **Proof Notes:** **Pass** — `ext_iff_toElement` via 5.3(iii) both ways + `ApproximableMap.ext`.
+* **Proof Notes:** `ext_iff_toElement` via 5.3(iii) both ways + `ApproximableMap.ext`.
   No `sorry`.
 
 #### Proposition 5.3(iii)
 * **Mathematical Target:** Pointwise order: `f ⊆ g` (as relations) iff `f(x) ⊆ g(x)` for all `x ∈ |A|`.
 * **Lean File:** `Scott1982/Proposition53.lean`
-* **Proof Notes:** **Pass** — `Le` / `le_iff_toElement_le`; ← uses 5.3(v). No `sorry`.
+* **Proof Notes:** `Le` / `le_iff_toElement_le`; ← uses 5.3(v). No `sorry`.
 
 #### Proposition 5.3(iv)
 * **Mathematical Target:** Monotonicity: `x ⊆ y` in `|A|` implies `f(x) ⊆ f(y)` in `|B|`.
 * **Lean File:** `Scott1982/Approximable.lean`
-* **Proof Notes:** **Pass** — `toElement_mono`.
+* **Proof Notes:** `toElement_mono`.
 
 #### Singleton reduction
 * **Mathematical Target:** Scott’s remark before Def 5.2: `u f v ↔ ∀ Y ∈ v, u f {Y}`
   (for `u ∈ Con_A`, `v ∈ Con_B`).
 * **Lean File:** `Scott1982/Proposition53.lean`
-* **Proof Notes:** **Pass** — `rel_iff_forall_singleton` (`mono` + `union_right` / `∪'`).
+* **Proof Notes:** `rel_iff_forall_singleton` (`mono` + `union_right` / `∪'`).
   Unnumbered inventory row. No `sorry`.
 
 #### Proposition 5.3(v)
 * **Mathematical Target:** Bridge lemma: `u f v ↔ v̄ ⊆ f(ū)` for `u ∈ Con_A`, `v ∈ Con_B`.
 * **Lean File:** `Scott1982/Proposition53.lean`
-* **Proof Notes:** **Pass** — `rel_iff_closure_le`; → via `subset_closure` + `mono`; ← via
+* **Proof Notes:** `rel_iff_closure_le`; → via `subset_closure` + `mono`; ← via
   `exists_rel_of_subset_image` on `ū` then `EntSet u u'` + `mono`. No `sorry`.
 
 #### Proposition 5.4
 * **Mathematical Target:** Identity `I_A` given by `u I v ↔ u ⊢ v`; `I(x) = x`.
 * **Lean File:** `Scott1982/Proposition54.lean`
-* **Proof Notes:** **Pass**
 
 #### Proposition 5.5
 * **Mathematical Target:** Composition `g ∘ f`; `(g ∘ f)(x) = g(f(x))`.
 * **Lean File:** `Scott1982/Proposition55.lean`
-* **Proof Notes:** **Pass**
 
 #### Proposition 5.6
 * **Mathematical Target:** Unique constant map `const b` with `(const b)(x) = b`;
   also `f ∘ (const b) = const (f(b))` and `(const b) ∘ g = const b`.
 * **Lean File:** `Scott1982/Proposition56.lean`
-* **Proof Notes:** **Pass** — `constMap` via `u (const b) v ↔ ↑v ⊆ b`; `constMap_toElement`;
+* **Proof Notes:** `constMap` via `u (const b) v ↔ ↑v ⊆ b`; `constMap_toElement`;
   uniqueness via `ext_iff_toElement`; composition laws via `comp_toElement`. No `sorry`.
 
 ---
@@ -503,35 +486,35 @@ Scott places it after the product remarks, before the sum construction.
 #### Definition 6.1
 * **Mathematical Target:** Product information system `A × B` on tagged tokens.
 * **Lean File:** `Scott1982/Product.lean`
-* **Proof Notes:** **Pass** — `ProdToken` / `IsProdToken`; `prodBot`; `fstFinset` / `sndFinset`;
+* **Proof Notes:** `ProdToken` / `IsProdToken`; `prodBot`; `fstFinset` / `sndFinset`;
   `ProdCon` / `ProdEnt`; `productSystem : InfoSys _` with all six Def 2.1 axioms. No `sorry`.
 
 #### Proposition 6.2
 * **Mathematical Target:** Approximable `fst`, `snd`, pairing `⟨f,g⟩` with universal property
   (`A × B` as an `InfoSys` is already Def 6.1 / `productSystem`).
 * **Lean File:** `Scott1982/Proposition62.lean`
-* **Proof Notes:** **Pass** — `fstMap` / `sndMap` / `pairMap`; `comp_fstMap_pairMap` /
+* **Proof Notes:** `fstMap` / `sndMap` / `pairMap`; `comp_fstMap_pairMap` /
   `comp_sndMap_pairMap`; uniqueness via `element_eq_of_fst_snd` + Prop 5.3 extensionality.
   Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Definition 6.3
 * **Mathematical Target:** Separated sum `A + B`.
 * **Lean File:** `Scott1982/Sum.lean`
-* **Proof Notes:** **Pass** — `SumToken` (`left` / `right` / `bot`); `sumBot`; `lftFinset` /
+* **Proof Notes:** `SumToken` (`left` / `right` / `bot`); `sumBot`; `lftFinset` /
   `rhtFinset`; `SumCon` / `SumEnt`; `sumSystem : InfoSys _` with all six Def 2.1 axioms.
   Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Proposition 6.4
 * **Mathematical Target:** Sum is an information system; injections and copairing.
 * **Lean File:** `Scott1982/Proposition64.lean`
-* **Proof Notes:** **Pass** — `inlMap` / `inrMap` / `copairMap`; `comp_copairMap_inlMap` /
+* **Proof Notes:** `inlMap` / `inrMap` / `copairMap`; `comp_copairMap_inlMap` /
   `comp_copairMap_inrMap`; `copairMap_botElement`; uniqueness via relation extensionality
   (choice-free `lft`/`rht` emptiness dichotomy). Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 6.5
 * **Mathematical Target:** Unit domain `1` with unique element `⊥`; terminal/initial mapping facts Scott records at end of §6.
 * **Lean File:** `Scott1982/Factoid65.lean`
-* **Proof Notes:** **Pass** — `unitSystem` on `PUnit`; `unitElement_eq_bot`;
+* **Proof Notes:** `unitSystem` on `PUnit`; `unitElement_eq_bot`;
   `approxMap_from_unit_eq_const` / `approxMap_to_unit_eq_const`;
   `toElement_constMap_bot`. Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
@@ -598,7 +581,7 @@ the CCC as Mathlib `Category` / `CartesianMonoidalCategory` / `MonoidalClosed`
 #### Definition 7.1
 * **Mathematical Target:** Function-space information system `A → B` with Scott's `Con`/`⊢` on pairs of consistent sets.
 * **Lean File:** `Scott1982/FunctionSpace.lean`
-* **Proof Notes:** **Pass** — `FunToken` / `funBot`; `funInputUnion` / `funOutputUnion`;
+* **Proof Notes:** `FunToken` / `funBot`; `funInputUnion` / `funOutputUnion`;
   `FunCon` / `FunEnt` (witness form of 7.1(iv)); `functionSystem : InfoSys _` with all six
   Def 2.1 axioms. Choice-free `decidableEq_finset` for token equality. Axioms ⊆
   `{propext, Quot.sound}`. No `sorry`.
@@ -606,7 +589,7 @@ the CCC as Mathlib `Category` / `CartesianMonoidalCategory` / `MonoidalClosed`
 #### Theorem 7.2
 * **Mathematical Target:** Elements of `|A → B|` = approximable maps; `apply` and `curry`.
 * **Lean File:** `Scott1982/Theorem72.lean`
-* **Proof Notes:** **Pass** — bijection `approxMap_toElement` / `element_toApproxMap`;
+* **Proof Notes:** bijection `approxMap_toElement` / `element_toApproxMap`;
   approximable `applyMap` and `curryMap`; `apply(g,y) = g(y)`;
   `uncurry ∘ curry = id` with uniqueness of `curry`. Axioms ⊆ `{propext, Quot.sound}`.
   No `sorry`.
@@ -614,21 +597,21 @@ the CCC as Mathlib `Category` / `CartesianMonoidalCategory` / `MonoidalClosed`
 #### Theorem 7.3
 * **Mathematical Target:** Least fixed-point operator `fix : (A → A) → A`.
 * **Lean File:** `Scott1982/Fixpoint.lean`
-* **Proof Notes:** **Pass** — `FixChain` / `FixReach`; approximable `fixMap`;
+* **Proof Notes:** `FixChain` / `FixReach`; approximable `fixMap`;
   `fixElement` with `f(fix f) = fix f`, least among pre-fixed points, and operator
   uniqueness. Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Proposition 7.4
 * **Mathematical Target:** Plotkin-style equational characterization of `fix`.
 * **Lean File:** `Scott1982/Proposition74.lean`
-* **Proof Notes:** **Pass** — (ii) `fix(f) = f(fix(f))`; (iii) naturality for strict
+* **Proof Notes:** (ii) `fix(f) = f(fix(f))`; (iii) naturality for strict
   commuting maps; uniqueness via the Theorem 7.3 least-fixed-point property.
   Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
 
 #### Factoid 7.5
 * **Mathematical Target:** Strict function space `A →ₛ B` and `strict` operator; `A × A ≅ (BOOL →ₛ A)`.
 * **Lean File:** `Scott1982/Factoid75.lean`
-* **Proof Notes:** **Pass** — `IsStrict`; `strictify` with `IsStrict_strictify`;
+* **Proof Notes:** `IsStrict`; `strictify` with `IsStrict_strictify`;
   `strictFunctionSystem` (`StrictFunToken` + empty-input Con clause); retract via
   `approxMap_toStrictElement` / `strictifyElement`; flat `boolSystem`; conditional
   `condMap` with `condMap_unique` / `conditional_iso` (`A × A ≅ (BOOL →ₛ A)` at the
@@ -638,7 +621,7 @@ the CCC as Mathlib `Category` / `CartesianMonoidalCategory` / `MonoidalClosed`
 #### Factoid 7.6
 * **Mathematical Target:** Combinators `const`, `pair`, `comp` as approximable operators.
 * **Lean File:** `Scott1982/Factoid76.lean`
-* **Proof Notes:** **Pass** — `constOp = curry fst` with `constOp_toElement`;
+* **Proof Notes:** `constOp = curry fst` with `constOp_toElement`;
   `pairOp` / `compOp` by currying `apply`–`fst`/`snd` composites;
   `pairOp_toElement` / `compOp_toElement` recover `⟨f,g⟩` and `g ∘ f`.
   Axioms ⊆ `{propext, Quot.sound}`. No `sorry`.
@@ -648,7 +631,7 @@ the CCC as Mathlib `Category` / `CartesianMonoidalCategory` / `MonoidalClosed`
   (with unit `1` from Factoid 6.5) show the category of information systems and approximable
   maps is cartesian closed.
 * **Lean File:** `Scott1982/Factoid77.lean`
-* **Proof Notes:** **Pass (stretch)** — bundled `InfoSysObj`; Mathlib `Category`,
+* **Proof Notes:** bundled `InfoSysObj`; Mathlib `Category`,
   `CartesianMonoidalCategory` (terminal `1`, binary products from Prop 6.2), and
   `MonoidalClosed` via `tensorExpEquiv` / `uncurryRight_comp_left` (Scott curry after
   product symmetry, left-natural in the domain). Bare `Category` axioms ⊆
@@ -693,7 +676,7 @@ flowchart TD
 #### Factoid 8.1
 * **Mathematical Target:** Inductive construction of tree / S-expression domain `T ≅ A + (T × T)`.
 * **Lean File:** `Scott1982/Factoid81.lean`
-* **Proof Notes:** **Pass** — inductive `TreeToken` (Scott (1)–(3)); projection-based
+* **Proof Notes:** inductive `TreeToken` (Scott (1)–(3)); projection-based
   `TreeCon` / `TreeEnt` matching sum×product clauses (4)–(12); `treeSystem : InfoSys _`
   with all six Def 2.1 axioms; unfolding `treeUnfold` / `treeRhs` into
   `sumSystem A (productSystem (treeSystem A) (treeSystem A))`. Axioms ⊆
@@ -702,7 +685,7 @@ flowchart TD
 #### Factoid 8.2
 * **Mathematical Target:** λ-calculus model `D ≅ A + (D → D)` via mutual recursion of `D` and `Con`.
 * **Lean File:** `Scott1982/Factoid82.lean`
-* **Proof Notes:** **Pass** — choice-free well-founded **`LamConDepth`** / inductive
+* **Proof Notes:** choice-free well-founded **`LamConDepth`** / inductive
   **`LamEntDepth`** (Scott (8)–(11)); Def 2.1 `ent_refl` / `ent_con` /
   **`ent_trans`** (bot/atom + funTok via combined witness + depth IH);
   `lambdaSystem : InfoSys (LamDToken A)` on depth-WF tokens; unfolding
@@ -713,7 +696,7 @@ flowchart TD
 #### Factoid 8.3
 * **Mathematical Target:** Universal domain remarks (`V`, retract `U`).
 * **Lean File:** `Scott1982/Factoid83.lean`
-* **Proof Notes:** **Pass** — `VToken` (Scott (1)–(2): `Δ`/`∇`/`pairL`/`pairR`);
+* **Proof Notes:** `VToken` (Scott (1)–(2): `Δ`/`∇`/`pairL`/`pairR`);
   all finite sets consistent; inductive **`VEnt`** (3)–(6); `vSystem : InfoSys VToken`;
   `vUnfold` / `vRhs` into `productSystem vSystem vSystem` (`V ≅ V × V`);
   `UToken = D_V \ {∇}` with **`UCon`** = `⊬_V ∇` and **`UEnt`** from `VEnt`
@@ -724,7 +707,7 @@ flowchart TD
 #### Factoid 8.4
 * **Mathematical Target:** Domain of domains via approximable maps on `P` satisfying (1)–(5).
 * **Lean File:** `Scott1982/Factoid84.lean`
-* **Proof Notes:** **Pass** (Scott’s sketch, as far as stated) — powerset InfoSys
+* **Proof Notes:** (Scott’s sketch, as far as stated) — powerset InfoSys
   **`P`** on `ℕ` (`0 = Δ`, all finite sets Con, minimal Ent); Scott’s (1)–(5) as
   `ReflApprox` / `IdemApprox` / `BotApprox` / `RogueApprox` / `ConsistentApprox` on
   `ApproximableMap P P`; package **`DomainApprox`**; consistency remark

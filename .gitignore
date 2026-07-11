@@ -13,6 +13,7 @@ sources/ocr_*.log
 # Generated from arxiv.md by scripts/build_arxiv_tex.sh (do not commit)
 arxiv_with_code.md
 arxiv.tex
+arxiv.pdf
 appendix.tex
 appendix.pdf
 lean-listings/
