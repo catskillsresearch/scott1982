@@ -36,21 +36,22 @@ From this substrate he builds approximable mappings (a category), products, sepa
 function spaces (cartesian closed structure), least fixed points, and recursive domain
 equations (trees / S-expressions, λ-calculus models, universal domains).
 
-### Paper section dependency (provisional)
+### Paper section dependency
 
-Edges follow Scott's narrative dependencies in the paper. **This diagram will be revised**
-once the Lean import graph is stable — we do not yet know the true mechanization dependencies.
+Edges follow Scott's narrative dependencies. Lean import graphs for §§2–3 and §§5–8 are
+stable (see per-section diagrams below); §4 remains mostly **Not Yet** (only Factoid 4.1
+Pass), so the dashed §4 edges stay advisory.
 
 ```mermaid
 flowchart TB
   S1["§1 Introduction<br/><i>motivation only</i>"]
-  S2["§2 Information systems<br/><i>Def 2.1–2.2, Prop 2.3</i>"]
-  S3["§3 Elements<br/><i>Def 3.1 + factoids</i>"]
-  S4["§4 Lattices & topology<br/><i>factoids 4.x</i>"]
+  S2["§2 Information systems<br/><i>Def 2.1–2.2, Prop 2.3, Factoids 2.4–2.6</i>"]
+  S3["§3 Elements<br/><i>Def 3.1, Factoids 3.2–3.6</i>"]
+  S4["§4 Lattices & topology<br/><i>Factoid 4.1 Pass; 4.2–4.6 Not Yet</i>"]
   S5["§5 Approximable mappings<br/><i>Def 5.1–5.2, Prop 5.3–5.6</i>"]
   S6["§6 Products & sums<br/><i>Def 6.1/6.3, Prop 6.2/6.4, Factoid 6.5</i>"]
   S7["§7 Function space<br/><i>Def 7.1, Thm 7.2–7.3, Prop 7.4, Factoids 7.5–7.7</i>"]
-  S8["§8 Domain equations<br/><i>factoids 8.x</i>"]
+  S8["§8 Domain equations<br/><i>Factoids 8.1–8.4</i>"]
 
   S1 -.-> S2
   S2 --> S3
@@ -65,10 +66,12 @@ flowchart TB
   S4 -.-> S5
 ```
 
-### Planned Lean module map (provisional)
+### Lean module map
 
 Named concepts get section-style modules; unnamed numbered results get `DefinitionXY` /
-`PropositionXY` / `TheoremXY` files; invented claims use **Factoid** labels.
+`PropositionXY` / `TheoremXY` files; invented claims use **Factoid** labels. Edges are
+Lean imports (coarse: `Factoid3*` stands for the §3 family). §8 factoids are **independent**
+constructions — they do not import each other; `DomainEquation.lean` only re-exports 8.1–8.2.
 
 ```mermaid
 flowchart TD
@@ -78,15 +81,19 @@ flowchart TD
   D22["Definition22.lean"]
   P23["Proposition23.lean"]
   F3["Factoid3*.lean<br/>⊥, closure, …"]
-  F4["Factoid4*.lean<br/>meets, directed lubs, …"]
+  F4["Factoid4*.lean<br/>4.1 Pass; 4.2–4.6 Not Yet"]
   Ap["Approximable.lean<br/>Def 5.1–5.2"]
   P5["Proposition5*.lean"]
   Pr["Product.lean / Proposition62.lean<br/>Def 6.1, Prop 6.2"]
   Su["Sum.lean / Proposition64.lean<br/>Def 6.3, Prop 6.4"]
   F65["Factoid65.lean<br/>unit domain"]
   FS["FunctionSpace.lean<br/>Def 7.1"]
-  Fx["Fixpoint.lean<br/>Thm 7.3, Prop 7.4"]
-  DE["DomainEquation.lean<br/>§8 constructions"]
+  Fx["Theorem72 / Fixpoint / Prop74<br/>+ Factoid7*"]
+  F81["Factoid81.lean<br/>T ≅ A + (T × T)"]
+  F82["Factoid82.lean<br/>D ≅ A + (D → D)"]
+  F83["Factoid83.lean<br/>V / U"]
+  F84["Factoid84.lean<br/>DomainApprox on P"]
+  DE["DomainEquation.lean<br/>re-exports 8.1–8.2"]
 
   C --> IS
   IS --> F2
@@ -94,19 +101,30 @@ flowchart TD
   C --> P23
   IS --> F3
   F3 --> F4
-  IS --> Ap
   F3 --> Ap
   Ap --> P5
+  C --> Pr
+  P23 --> Pr
   Ap --> Pr
+  C --> Su
+  P23 --> Su
   Ap --> Su
   P5 --> F65
   F3 --> F65
   C --> FS
   P23 --> FS
   FS --> Fx
-  Pr --> DE
-  Su --> DE
-  FS --> DE
+  Ap --> Fx
+  Pr --> Fx
+  Pr --> F81
+  Su --> F81
+  FS --> F82
+  Su --> F82
+  Pr --> F83
+  P5 --> F84
+  F3 --> F84
+  F81 --> DE
+  F82 --> DE
 ```
 
 ---
@@ -300,12 +318,14 @@ Informal section; elevated claims are Factoids. Lean dependencies provisional.
 
 ```mermaid
 flowchart TD
-  F41["Factoid 4.1<br/><i>Factoid41.lean</i>"]
-  F42["Factoid 4.2<br/>conditional complete meets"]
-  F43["Factoid 4.3<br/>consistent joins"]
-  F44["Factoid 4.4<br/>chain / directed lubs"]
-  F45["Factoid 4.5<br/>algebraicity via ū"]
-  F46["Factoid 4.6<br/>Scott topology sketch"]
+  F33["Factoid 3.3<br/><i>⊥ / Factoid33.lean</i>"]
+  F41["Factoid 4.1<br/><i>Factoid41.lean — Pass</i>"]
+  F42["Factoid 4.2<br/>conditional complete meets<br/><i>Not Yet</i>"]
+  F43["Factoid 4.3<br/>consistent joins<br/><i>Not Yet</i>"]
+  F44["Factoid 4.4<br/>chain / directed lubs<br/><i>Not Yet</i>"]
+  F45["Factoid 4.5<br/>algebraicity via ū<br/><i>Not Yet</i>"]
+  F46["Factoid 4.6<br/>Scott topology sketch<br/><i>Not Yet</i>"]
+  F33 --> F41
   F41 --> F42 --> F43
   F41 --> F44 --> F45
   F45 --> F46
@@ -641,17 +661,33 @@ the CCC as Mathlib `Category` / `CartesianMonoidalCategory` / `MonoidalClosed`
 
 ### §8 Some domain equations
 
+Scott presents Factoids 8.1–8.4 in narrative order, but the Lean modules are **independent**
+constructions (no `Factoid8i → Factoid8(i+1)` imports). Edges below are actual Lean imports.
+`DomainEquation.lean` only re-exports 8.1–8.2.
+
 ```mermaid
-flowchart LR
-  P62["Proposition 6.2<br/><i>Product</i>"]
-  P64["Proposition 6.4<br/><i>Sum</i>"]
-  F81["Factoid 8.1<br/><i>Factoid81.lean — trees</i>"]
-  F82["Factoid 8.2<br/><i>Factoid82.lean — λ-model</i>"]
-  F83["Factoid 8.3<br/><i>Factoid83.lean — universal V / U</i>"]
-  F84["Factoid 8.4<br/><i>Factoid84.lean — domain of domains</i>"]
-  P62 --> F81
-  P64 --> F81
-  F81 --> F82 --> F83 --> F84
+flowchart TD
+  Pr["Product.lean<br/><i>Def 6.1</i>"]
+  Su["Sum.lean<br/><i>Def 6.3</i>"]
+  FS["FunctionSpace.lean<br/><i>Def 7.1</i>"]
+  P55["Proposition 5.5<br/><i>Proposition55.lean</i>"]
+  F34["Factoid 3.4<br/><i>Factoid34.lean</i>"]
+  F35["Factoid 3.5<br/><i>Factoid35.lean</i>"]
+  F81["Factoid 8.1<br/><i>Factoid81.lean — T ≅ A+(T×T)</i>"]
+  F82["Factoid 8.2<br/><i>Factoid82.lean — D ≅ A+(D→D)</i>"]
+  F83["Factoid 8.3<br/><i>Factoid83.lean — V / U</i>"]
+  F84["Factoid 8.4<br/><i>Factoid84.lean — DomainApprox</i>"]
+  DE["DomainEquation.lean<br/><i>re-exports 8.1–8.2</i>"]
+  Pr --> F81
+  Su --> F81
+  FS --> F82
+  Su --> F82
+  Pr --> F83
+  P55 --> F84
+  F34 --> F84
+  F35 --> F84
+  F81 --> DE
+  F82 --> DE
 ```
 
 #### Factoid 8.1
@@ -712,6 +748,14 @@ Acknowledgments (Dana Scott **[Sco82]**, AI tool cards, artifact URL) are inject
 References when building `arxiv.tex` via `scripts/ai_model_cards.py` — they are not kept in
 this file.
 
+Build the arXiv PDF / submission zip (GitHub-link Lean Code appendix, modelled on scott1980):
+
+```bash
+bash scripts/build_arxiv_tex.sh      # arxiv.md → arxiv.tex + figures/
+bash scripts/build_arxiv_pdf.sh      # compile PDF + package dist/arxiv_submit.zip
+# or: bash scripts/package_arxiv_submit.sh
+```
+
 ---
 
 ## References
@@ -728,30 +772,53 @@ this file.
 
 ---
 
-## Lean source index
+## Lean Code
 
-| File | Role |
-| --- | --- |
-| `Scott1982.lean` | Root import graph |
-| `Scott1982/Constructive.lean` | Choice-free `Finset` prelude |
-| `Scott1982/InfoSys.lean` | Def 2.1 + Def 3.1 (`Element`) |
-| `Scott1982/Definition22.lean` | Def 2.2 `EntSet` |
-| `Scott1982/Proposition23.lean` | Prop 2.3 |
-| `Scott1982/Factoid24.lean` | Factoid 2.4 ℕ lower-bound example |
-| `Scott1982/Factoid25.lean` | Factoid 2.5 interval example |
-| `Scott1982/Factoid26.lean` | Factoid 2.6 partial-function example |
-| `Scott1982/Factoid32.lean` | Δ ∈ every element |
-| `Scott1982/Factoid33.lean` | ⊥ least |
-| `Scott1982/Factoid34.lean` | top / Tot |
-| `Scott1982/Factoid35.lean` | finite closure `ū` |
-| `Scott1982/Factoid36.lean` | `x = ⋃{ū ∣ u ⊆ x}` |
-| `Scott1982/Factoid41.lean` | inf-semilattice under `∩` |
-| `Scott1982/Approximable.lean` | Def 5.1–5.2 |
-| `Scott1982/Proposition53.lean` | Prop 5.3(ii)(iii)(v), singleton reduction |
-| `Scott1982/Proposition54.lean` | identity map |
-| `Scott1982/Proposition55.lean` | composition |
-| `Scott1982/Proposition56.lean` | constant maps |
-| `Scott1982/Product.lean` | Def 6.1 `productSystem` |
-| *(further files as inventory lands)* | |
+All Lean 4 modules in the [scott1982](https://github.com/catskillsresearch/scott1982)
+repository are listed below as GitHub links (sources stay on GitHub; nothing is inlined
+in the arXiv PDF). Order matches
+[`Scott1982.lean`](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982.lean).
 
-Vision transcript: `sources/Domains_for_Denotational_Semantics.md`.
+### Root
+
+* [Scott1982.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982.lean)
+
+### Library (import order)
+
+* [Constructive.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Constructive.lean)
+* [InfoSys.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/InfoSys.lean)
+* [Definition22.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Definition22.lean)
+* [Proposition23.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition23.lean)
+* [Factoid24.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid24.lean)
+* [Factoid25.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid25.lean)
+* [Factoid26.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid26.lean)
+* [Factoid32.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid32.lean)
+* [Factoid33.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid33.lean)
+* [Factoid34.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid34.lean)
+* [Factoid35.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid35.lean)
+* [Factoid36.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid36.lean)
+* [Factoid41.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid41.lean)
+* [Approximable.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Approximable.lean)
+* [Proposition53.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition53.lean)
+* [Proposition54.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition54.lean)
+* [Proposition55.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition55.lean)
+* [Proposition56.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition56.lean)
+* [Product.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Product.lean)
+* [Proposition62.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition62.lean)
+* [Sum.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Sum.lean)
+* [Proposition64.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition64.lean)
+* [Factoid65.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid65.lean)
+* [FunctionSpace.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/FunctionSpace.lean)
+* [Theorem72.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Theorem72.lean)
+* [Fixpoint.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Fixpoint.lean)
+* [Proposition74.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Proposition74.lean)
+* [Factoid75.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid75.lean)
+* [Factoid76.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid76.lean)
+* [Factoid77.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid77.lean)
+* [Factoid81.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid81.lean)
+* [Factoid82.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid82.lean)
+* [Factoid83.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid83.lean)
+* [Factoid84.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid84.lean)
+* [DomainEquation.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/DomainEquation.lean)
+
+Vision transcript: [`sources/Domains_for_Denotational_Semantics.md`](https://github.com/catskillsresearch/scott1982/blob/main/sources/Domains_for_Denotational_Semantics.md).

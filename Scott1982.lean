@@ -30,4 +30,6 @@ import Scott1982.Factoid76
 import Scott1982.Factoid77
 import Scott1982.Factoid81
 import Scott1982.Factoid82
+import Scott1982.Factoid83
+import Scott1982.Factoid84
 import Scott1982.DomainEquation

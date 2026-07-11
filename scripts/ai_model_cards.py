@@ -1,6 +1,6 @@
 """Model-card registry for the AI-assisted development acknowledgements block.
 
-Injected into `arxiv_with_code.md` / `arxiv.tex` by `build_arxiv_tex.py` at:
+Injected into `arxiv.md` / `arxiv.tex` by `build_arxiv_tex.py` at:
   <!-- AI_MODEL_TOOL_BULLETS --> … <!-- /AI_MODEL_TOOL_BULLETS -->
   <!-- AI_MODEL_REFERENCES --> … <!-- /AI_MODEL_REFERENCES -->
 
@@ -152,8 +152,8 @@ full responsibility for them.
 
 The development is at
 [`github.com/catskillsresearch/scott1982`](https://github.com/catskillsresearch/scott1982).
-Run `lake build Scott1982` for the formalization; `scripts/generate_arxiv_with_code.sh`
-builds `arxiv_with_code.md` from this file plus the Lean source.
+Run `lake build Scott1982` for the formalization; `bash scripts/build_arxiv_tex.sh`
+builds `arxiv.tex` from `arxiv.md` (Lean Code appendix = GitHub hyperlinks).
 
 """
 

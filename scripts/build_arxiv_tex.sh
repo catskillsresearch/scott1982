@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
-# Regenerate arxiv_with_code.md and build arxiv.tex (gitignored build artifacts).
+# Build arxiv.tex from arxiv.md (GitHub-link Lean Code appendix; no source expansion).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo "==> Regenerating arxiv_with_code.md"
-bash scripts/generate_arxiv_with_code.sh
-
-echo "==> Building arxiv.tex + lean-listings/ + figures/"
+echo "==> Building arxiv.tex + figures/ from arxiv.md"
 python3 scripts/build_arxiv_tex.py

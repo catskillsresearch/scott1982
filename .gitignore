@@ -10,6 +10,16 @@ __pycache__/
 sources/pages/
 sources/ocr_*.log
 
+# Generated from arxiv.md by scripts/build_arxiv_tex.sh (do not commit)
+arxiv_with_code.md
+arxiv.tex
+appendix.tex
+appendix.pdf
+lean-listings/
+figures/
+dist/
+00README.json
+
 # LaTeX build artifacts (the .tex/.pdf deliverables are kept)
 *.aux
 *.log
@@ -17,4 +27,5 @@ sources/ocr_*.log
 *.fls
 *.fdb_latexmk
 *.toc
+*.lof
 texput.log
