@@ -18,8 +18,6 @@
 \usepackage{newunicodechar}
 \usepackage{listings}
 \usepackage{soul}
-% xurl before hyperref: allow line breaks inside long GitHub URLs in the Lean Code appendix
-\usepackage{xurl}
 \usepackage[colorlinks=true,linkcolor=blue!40!black,citecolor=blue!40!black,urlcolor=blue!40!black]{hyperref}
 
 % Let long \texttt{...} identifiers (e.g. lindenbaum_next_subset) break after each
@@ -27,13 +25,13 @@
 \let\origtextunderscore\_
 \renewcommand{\_}{\origtextunderscore\allowbreak}
 
-% Long inlined Lean listings can exhaust pdfTeX main memory; build locally with
-% LuaLaTeX (see .latexmkrc).  arXiv's AutoTeX has the headroom for pdfLaTeX.
+% Long inlined Lean listings can exhaust pdfTeX main memory; build with
+% LuaLaTeX (see .latexmkrc).
 %
 % The listings are kept as real UTF-8 Lean source: every Lean operator is rendered
 % through a `literate` replacement to a proper LaTeX symbol, so the code displays with
-% its native notation (∀ ◇ □ ⟶ ⊢ φ ψ Γ …) under BOTH pdfLaTeX and LuaLaTeX.  Every
-% non-ASCII glyph that occurs in the sources must appear in this table.
+% its native notation (∀ ◇ □ ⟶ ⊢ φ ψ Γ …).  Every non-ASCII glyph that occurs in the
+% sources must appear in this table.
 
 \lstdefinestyle{leanbox}{
   basicstyle=\footnotesize\ttfamily,

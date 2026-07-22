@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
-"""Optional review artifact: expand Lean GitHub links from arxiv.md → arxiv_with_code.md.
+"""Append complete Lean source to arxiv.md → arxiv_with_code.md (build artifact).
 
-The arXiv pipeline (``scripts/build_arxiv_tex.py``) reads ``arxiv.md`` directly and keeps
-the Lean Code appendix as GitHub hyperlinks only (scott1980 style). This script is for
-local review copies that inline sources; it is **not** part of the arXiv build.
+Follows the scott1972 appendix convention: one markdown heading per Lean file
+(demoted to a LaTeX ``\\subsection`` by ``build_arxiv_tex.py``), with the
+verbatim source in a fenced ``lean`` block.
 """
 
 from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-import re
 
 ROOT = Path(__file__).resolve().parent.parent
 
-LEAN_CODE_LINK_RE = re.compile(
-    r"^\* \[([^\]]+\.lean)\]\("
-    r"https://github\.com/[^/]+/[^/]+/blob/[^/]+/"
-    r"([^)]+)\)"
-    r"(?:[ \t]+([—–-].*))?[ \t]*$",
-    re.MULTILINE,
-)
+# Optional role labels for the appendix index table (keyed by repo-relative path).
+# Files not listed here still appear; the Role cell falls back to the path stem.
+FILE_ROLES: dict[str, str] = {
+    "Scott1982.lean": "Root import graph",
+}
 
 
 def paper_title(arxiv_text: str) -> str:
@@ -41,60 +38,122 @@ def narrative_body(arxiv_text: str) -> str:
     return body.rstrip()
 
 
-def expand_lean_links(text: str) -> str:
-    """Replace Lean Code GitHub bullets with inlined ```lean fences."""
-    marker = "## Lean Code"
-    pos = text.find(marker)
-    if pos == -1:
-        raise RuntimeError("missing ## Lean Code in arxiv.md")
-    head, tail = text[:pos], text[pos:]
+def strip_lean_code_section(body: str) -> str:
+    """Drop arxiv.md's GitHub-link Lean Code index; the appendix replaces it."""
+    markers = ("\n## Lean Code\n", "\n## Lean Code\r\n")
+    for marker in markers:
+        idx = body.find(marker)
+        if idx != -1:
+            return body[:idx].rstrip() + "\n"
+    if body.startswith("## Lean Code\n"):
+        return ""
+    return body
 
-    def repl(match: re.Match[str]) -> str:
-        relpath = match.group(2)
-        path = ROOT / relpath
-        if not path.is_file():
-            raise FileNotFoundError(f"Lean file not found for link: {relpath}")
-        content = path.read_text(encoding="utf-8").rstrip() + "\n"
-        content = content.replace("```", "'''")
-        n = len(content.splitlines())
-        return (
-            f"* **{match.group(1)}** (`{relpath}`) — {n} lines\n\n"
-            f"```lean\n{content}```\n"
-        )
 
-    new_tail, count = LEAN_CODE_LINK_RE.subn(repl, tail)
-    if count == 0:
-        raise RuntimeError(
-            "No Lean Code GitHub blob links found. Expected bullets like "
-            "`* [InfoSys.lean](https://github.com/.../blob/main/Scott1982/InfoSys.lean)`."
-        )
-    return head + new_tail
+def lean_files_from_root() -> list[str]:
+    """All library `.lean` files in `Scott1982.lean` import order, plus the root module."""
+    root_mod = ROOT / "Scott1982.lean"
+    files = ["Scott1982.lean"]
+    for line in root_mod.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line.startswith("import "):
+            continue
+        mod = line.removeprefix("import ").strip()
+        if not mod.startswith("Scott1982."):
+            continue
+        rel = mod.replace(".", "/") + ".lean"
+        files.append(rel)
+    return files
+
+
+def sanitize_fence_content(content: str) -> str:
+    # Nested ``` in docstrings would break markdown fences in arxiv_with_code.md.
+    return content.replace("```", "'''")
+
+
+def role_for(path: str) -> str:
+    if path in FILE_ROLES:
+        return FILE_ROLES[path]
+    name = Path(path).stem
+    if name.startswith("Factoid"):
+        return "Factoid"
+    if name.startswith("Definition"):
+        return "Definition"
+    if name.startswith("Theorem") or name.startswith("Lemma"):
+        return "Theorem / Lemma"
+    if name.startswith("Proposition"):
+        return "Proposition"
+    if name in {
+        "InfoSys",
+        "Approximable",
+        "Product",
+        "Sum",
+        "FunctionSpace",
+        "Fixpoint",
+        "DomainEquation",
+        "Constructive",
+    }:
+        return "Core infrastructure"
+    return name
 
 
 def main() -> None:
     arxiv_path = ROOT / "arxiv.md"
     arxiv = arxiv_path.read_text(encoding="utf-8")
     title = paper_title(arxiv)
-    body = expand_lean_links(narrative_body(arxiv))
+    body = strip_lean_code_section(narrative_body(arxiv))
+    files = lean_files_from_root()
+
+    total_lines = 0
+    file_line_counts: list[tuple[str, int]] = []
+    for f in files:
+        n = len((ROOT / f).read_text(encoding="utf-8").splitlines())
+        file_line_counts.append((f, n))
+        total_lines += n
 
     parts: list[str] = []
     parts.append(
-        "<!-- AUTO-GENERATED: optional review copy; arXiv build uses arxiv.md directly -->\n"
+        "<!-- AUTO-GENERATED: run scripts/generate_arxiv_with_code.sh to refresh -->\n"
         "<!-- AGENTS: do not read or grep this file. Use arxiv.md; see .cursorignore -->\n"
     )
     parts.append(f"# {title} — full narrative + complete Lean source\n\n")
     parts.append(
-        "> **Generated artifact — not for agents / not for arXiv.** Inventory lives in "
-        "[`arxiv.md`](arxiv.md). The arXiv pipeline keeps Lean Code as GitHub links only. "
-        "Regenerate this review copy with `scripts/generate_arxiv_with_code.sh`.\n\n"
+        "> **Generated artifact — not for agents.** Inventory and narrative live in "
+        "[`arxiv.md`](arxiv.md). Regenerate with `scripts/generate_arxiv_with_code.sh`. "
+        "This file is stale whenever it is older than `arxiv.md` or any listed `.lean` file.\n\n"
     )
     parts.append(
-        f"*Generated {date.today().isoformat()} from `arxiv.md` Lean Code hyperlinks "
-        "(sources inlined for local review).*\n\n"
+        f"*Generated {date.today().isoformat()} from `arxiv.md` and {len(files)} library "
+        f"`.lean` files ({total_lines} lines) in `Scott1982.lean` import order.*\n\n"
+    )
+    parts.append(
+        "**Review copy.** The narrative body matches [`arxiv.md`](arxiv.md) "
+        "(excluding the title block through the first `---` and the GitHub-link "
+        "**Lean Code** index). This file appends **Appendix: Complete Lean source** "
+        "with one subsection per file.\n\n"
     )
     parts.append("---\n\n")
+    parts.append("# Narrative + Lean source (from arxiv.md)\n\n")
     parts.append(body)
-    parts.append("\n")
+    parts.append("\n\n---\n\n")
+    parts.append("# Appendix A: Complete Lean source\n\n")
+    parts.append("| Role | File | Lines |\n")
+    parts.append("| --- | --- | ---: |\n")
+    for f, n in file_line_counts:
+        parts.append(f"| {role_for(f)} | `{f}` | {n} |\n")
+    parts.append(
+        f"\n**Total:** {len(files)} files, {total_lines} lines of Lean.\n\n"
+        "Files appear in `Scott1982.lean` import order. "
+        "Each block is a verbatim copy of the repository file at generation time.\n\n"
+    )
+
+    for f, n in file_line_counts:
+        content = sanitize_fence_content((ROOT / f).read_text(encoding="utf-8").rstrip()) + "\n"
+        parts.append(f"## `{f}`\n\n")
+        parts.append(f"*{n} lines.*\n\n")
+        parts.append("```lean\n")
+        parts.append(content)
+        parts.append("```\n\n")
 
     out = ROOT / "arxiv_with_code.md"
     out.write_text("".join(parts), encoding="utf-8")

@@ -744,12 +744,12 @@ Acknowledgments (Dana Scott **[Sco82]**, AI tool cards, artifact URL) are inject
 References when building `arxiv.tex` via `scripts/ai_model_cards.py` — they are not kept in
 this file.
 
-Build the arXiv PDF / submission zip (GitHub-link Lean Code appendix, modelled on scott1980):
+Rebuild this document (PDF with complete Lean source appendix, one subsection per
+module):
 
 ```bash
-bash scripts/build_arxiv_tex.sh      # arxiv.md → arxiv.tex + figures/
-bash scripts/build_arxiv_pdf.sh      # compile PDF + package dist/arxiv_submit.zip
-# or: bash scripts/package_arxiv_submit.sh
+bash scripts/build_arxiv_pdf.sh            # expand Lean → tex → arxiv.pdf
+bash scripts/build_arxiv_pdf.sh --pdf-only # PDF only when arxiv.tex already current
 ```
 
 ---
@@ -771,8 +771,8 @@ bash scripts/build_arxiv_pdf.sh      # compile PDF + package dist/arxiv_submit.z
 ## Lean Code
 
 All Lean 4 modules in the [scott1982](https://github.com/catskillsresearch/scott1982)
-repository are listed below as GitHub links (sources stay on GitHub; nothing is inlined
-in the arXiv PDF). Order matches
+repository, listed for GitHub browsing. In the PDF build this index is replaced by the
+verbatim Lean source (complete appendix, one subsection per module). Order matches
 [`Scott1982.lean`](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982.lean).
 
 ### Root

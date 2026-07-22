@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-r"""Convert arxiv.md to arxiv.tex (arXiv-ready).
+r"""Convert arxiv_with_code.md to arxiv.tex (PDF build).
 
 Pipeline:
-  1. Read ``arxiv.md`` directly (no ``arxiv_with_code.md`` / no inlined Lean sources).
+  1. Drop the GitHub-only navigation preamble from ``arxiv_with_code.md``.
   2. Lift the `## Abstract` section into a LaTeX \begin{abstract}.
-  3. In `## Lean Code`, rewrite each GitHub blob bullet to a hyperlinked path plus the
-     same URL in plain text (sources stay on GitHub; nothing is expanded into .tex).
-  4. Clean up "## Appendix A/B -- ..." heading titles, then insert \\appendix before
-     `## Lean Code`.
-  5. Strip manual section numbers so LaTeX does the numbering.
-  6. Replace remaining fenced blocks (bash/math/mermaid) with listings/figures as needed.
-  7. Inject AI model-card acknowledgements; pandoc -> LaTeX; splice placeholders.
-  8. Emit a single ``arxiv.tex`` for one-shot latexmk.
+  3. Demote Appendix Lean-file headings so each module is a ``\\subsection``
+     (scott1972 convention), then insert \\appendix before Complete Lean source.
+  4. Strip manual section numbers so LaTeX does the numbering.
+  5. Replace fenced Lean/math/bash with \\lstinputlisting blocks; render mermaid to PDF.
+  6. Inject AI model-card acknowledgements; pandoc -> LaTeX; splice placeholders.
+  7. Emit a single ``arxiv.tex`` for one-shot latexmk (LuaLaTeX locally).
 """
 
 from __future__ import annotations
@@ -30,7 +28,7 @@ sys.path.insert(0, str(SCRIPTS))
 from ai_model_cards import inject_model_cards
 from lean_listing_sanitize import chunk_line_ranges, sanitize_lean_for_arxiv
 
-SRC = ROOT / "arxiv.md"
+SRC = ROOT / "arxiv_with_code.md"
 OUT = ROOT / "arxiv.tex"
 PREAMBLE = SCRIPTS / "tex_preamble_arxiv.tex"
 LISTINGS_DIR = ROOT / "lean-listings"
@@ -44,17 +42,6 @@ COMPANY = "Catskills Research Company"
 GITHUB_URL = r"https://github.com/catskillsresearch/scott1982"
 ORCID = "0000-0001-8299-9361"
 EMAIL = "lars.ericson@catskillsresearch.com"
-
-# Lean Code appendix bullets in arxiv.md, e.g.
-# * [InfoSys.lean](https://github.com/.../blob/main/Scott1982/InfoSys.lean)
-# * [Factoid82.lean](https://github.com/.../Factoid82.lean) — λ-model …
-LEAN_CODE_LINK_RE = re.compile(
-    r"^\* \[([^\]]+\.lean)\]\("
-    r"(https://github\.com/[^/]+/[^/]+/blob/[^/]+/([^)]+))\)"
-    # Trailing note optional; do not use \s*$ (would eat blank lines before ### headings).
-    r"(?:[ \t]+([—–-].*))?[ \t]*$",
-    re.MULTILINE,
-)
 
 
 def find_chrome() -> str | None:
@@ -114,10 +101,10 @@ GITHUB_INLINE_MATH = re.compile(r"\$`([^`\n]+?)`\$")
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 FENCE_RE = re.compile(r"^```([^\n]*)\n(.*?)^```\s*$", re.MULTILINE | re.DOTALL)
 MANUAL_SECTION_NUM = re.compile(r"^(#{1,6})[ \t]+\d+(?:\.\d+)*\.?[ \t]+", re.MULTILINE)
-# Bullet line immediately preceding a ```lean fence (legacy expanded form; unused when
-# building from arxiv.md link-only appendix).
-LEAN_BULLET_RE = re.compile(
-    r"^\*\s+\*\*([^*]+\.lean)\*\*\s+\(`([^`]+)`\)\s+[-\u2013\u2014]+\s+\d+\s+lines?\s*$"
+NARRATIVE_MARKER = "# Narrative + Lean source (from arxiv.md)"
+# After normalize_appendix_headings: `### Scott1982/...File.lean` precedes each fence.
+LEAN_FILE_HEADING_RE = re.compile(
+    r"^###\s+(Scott1982(?:\.lean|/[\w./-]+\.lean))\s*$"
 )
 APPENDIX_HEADING_RE = re.compile(
     r"^##\s+Appendix\s+[A-Z]\s*[-\u2013\u2014]+\s*(.+)$", re.MULTILINE
@@ -164,56 +151,45 @@ def strip_manual_section_numbers(text: str) -> str:
     return MANUAL_SECTION_NUM.sub(r"\1 ", text)
 
 
-def strip_title_block(text: str) -> str:
-    """Drop the leading `# Title` … `---` front matter from arxiv.md."""
-    if text.startswith("# "):
-        idx = text.find("\n---\n")
-        if idx != -1:
-            return text[idx + len("\n---\n") :].lstrip("\n")
-        return text[text.find("\n") + 1 :].lstrip("\n")
-    return text
-
-
-def format_lean_code_github_links(text: str) -> str:
-    """Rewrite Lean Code bullets to hyperlinked repo path + plain-text URL (no source)."""
-    marker = "## Lean Code"
-    pos = text.find(marker)
-    if pos == -1:
+def drop_github_nav(text: str) -> str:
+    idx = text.find(NARRATIVE_MARKER)
+    if idx == -1:
         return text
-    head, tail = text[:pos], text[pos:]
-
-    def repl(match: re.Match[str]) -> str:
-        url = match.group(2)
-        relpath = match.group(3)
-        note = (match.group(4) or "").strip()
-        # Hyperlinked repo path + plain URL. Use <url> (not `url`) so pandoc
-        # emits breakable \url{...} rather than non-breaking \texttt{...}.
-        if note:
-            # note already starts with an em/en dash from arxiv.md
-            return f"* [`{relpath}`]({url}) {note} — <{url}>"
-        return f"* [`{relpath}`]({url}) — <{url}>"
-
-    new_tail, count = LEAN_CODE_LINK_RE.subn(repl, tail)
-    if count == 0:
-        raise RuntimeError(
-            "No Lean Code GitHub blob links found in arxiv.md. "
-            "Expected bullets like "
-            "`* [InfoSys.lean](https://github.com/.../blob/main/Scott1982/InfoSys.lean)`."
-        )
-    return head + new_tail
+    return text[idx + len(NARRATIVE_MARKER) :].lstrip("\n")
 
 
 def normalize_appendix_headings(text: str) -> str:
-    """Drop the redundant literal "Appendix X --" prefix from appendix headings so
-    LaTeX's own `\\appendix` numbering doesn't print "Appendix B: Appendix A -- ...".
-    The main `## Lean Code` section needs no such rewrite.
+    """Match scott1972 heading demotion so each Lean file becomes a ``\\subsection``.
+
+    ``# Appendix A: Complete Lean source`` → ``## Complete Lean source``
+    (pandoc shift-1 → ``\\section``).
+
+    ``## `Scott1982/...File.lean``` → ``### Scott1982/...File.lean``
+    (pandoc shift-1 → ``\\subsection``).
+
+    Also drop the redundant literal "Appendix X --" prefix from any Composer
+    ``## Appendix A/B -- ...`` headings if present.
     """
+    text = re.sub(
+        r"^#\s+Appendix A: Complete Lean source\s*$",
+        "## Complete Lean source",
+        text,
+        flags=re.MULTILINE,
+    )
+    text = re.sub(
+        r"^##\s+`(Scott1982(?:\.lean|/[^`]+))`\s*$",
+        r"### \1",
+        text,
+        flags=re.MULTILINE,
+    )
     return APPENDIX_HEADING_RE.sub(lambda m: f"## {m.group(1)}", text)
 
 
 def demote_inventory_headings(text: str) -> str:
-    """Turn `#### Factoid 2.4` / `#### Definition 2.1` inventory rows into bold text,
-    not LaTeX subsubsections (avoids counter overflow and keeps lists attached).
+    """Turn `#### Exercise 2.1` inventory rows into bold text, not LaTeX subsubsections.
+
+    The chronological narrative has 300+ such headings; pdfLaTeX's subsubsection counter
+    overflows at 255.
 
     A blank line must follow the bold text: pandoc's markdown reader (unlike CommonMark)
     does not let a bullet list interrupt a paragraph, so without it every immediately
@@ -318,18 +294,16 @@ def lean_block_latex(code: str, listing_name: str) -> str:
 
 
 def extract_lean_titles(text: str) -> dict[str, str]:
-    """Map each ```lean fence (by order of appearance) to its module path, read off the
-    `* **Name.lean** (`path`) -- N lines` bullet line generate_arxiv_with_code.py writes
-    immediately before every fence in the `## Lean Code` section."""
+    """Map each ```lean fence to its module path from the preceding ``### path`` heading."""
     titles: dict[str, str] = {}
     lean_starts = [m.start() for m in re.finditer(r"^```lean\s*$", text, re.MULTILINE)]
     for idx, pos in enumerate(lean_starts):
         prefix = text[:pos].rstrip("\n")
         module = None
-        for line in reversed(prefix.splitlines()[-4:]):
-            m = LEAN_BULLET_RE.match(line.strip())
+        for line in reversed(prefix.splitlines()[-6:]):
+            m = LEAN_FILE_HEADING_RE.match(line.strip())
             if m:
-                module = m.group(2)
+                module = m.group(1)
                 break
         titles[f"LEANINCLUDE{idx:03d}"] = module or f"module-{idx + 1}"
     return titles
@@ -432,12 +406,22 @@ def cleanup_pandoc_latex(latex: str) -> str:
             r"\1",
             latex,
         )
+    latex = re.sub(
+        r"\\section\{Appendix A\. Lean source index\}",
+        "",
+        latex,
+    )
+    latex = re.sub(
+        r"\\section\{Appendix A: Complete Lean source\}",
+        r"\\section{Complete Lean source}",
+        latex,
+    )
     latex = re.sub(r"\n{3,}", "\n\n", latex)
     return latex
 
 
 def insert_appendix_command(latex: str) -> str:
-    marker = r"\section{Lean Code}"
+    marker = r"\section{Complete Lean source}"
     if marker not in latex:
         raise RuntimeError(f"missing {marker!r} in LaTeX output")
     return latex.replace(marker, r"\appendix" + "\n" + marker, 1)
@@ -451,11 +435,7 @@ def insert_list_of_figures(latex: str) -> str:
 
 
 def build_document(preamble: str, title_page: str, body: str) -> str:
-    # arXiv pdfLaTeX: \pdfoutput=1 must be the first line of the submission toplevel .tex
-    # (https://info.arxiv.org/help/faq/mistakes.html).  Guard with \ifdefined so local
-    # LuaLaTeX builds (see .latexmkrc) do not hit an undefined \pdfoutput.
-    head = "\\ifdefined\\pdfoutput\\pdfoutput=1\\fi\n\n"
-    return head + preamble + "\n\n" + title_page + "\n\n" + body + "\n\n\\end{document}\n"
+    return preamble + "\n\n" + title_page + "\n\n" + body + "\n\n\\end{document}\n"
 
 
 def write_if_changed(path: Path, content: str) -> bool:
@@ -467,7 +447,7 @@ def write_if_changed(path: Path, content: str) -> bool:
 
 
 def cleanup_abstract_latex(latex: str) -> str:
-    """Keep the abstract pdfLaTeX/arXiv-safe: ASCII plus standard LaTeX escapes."""
+    """Keep the abstract LaTeX-safe: ASCII plus standard LaTeX escapes."""
     latex = latex.replace("\\pandocbounded{", "{")
     latex = latex.replace("\\textbf{{[}", "\\textbf{[")
     latex = latex.replace("\\texttt{{[}", "\\texttt{[")
@@ -494,9 +474,7 @@ def build_title_page(abstract_latex: str) -> str:
 
         \\begin{{center}}
           \\small
-          \\textbf{{ORCID:}} {ORCID} \\\\
-          \\textbf{{Primary Category:}} cs.LO (Logic in Computer Science) \\\\
-          \\textbf{{Secondary Category:}} math.LO (Logic)
+          \\textbf{{ORCID:}} {ORCID}
         \\end{{center}}
 
         \\begin{{abstract}}
@@ -508,7 +486,10 @@ def build_title_page(abstract_latex: str) -> str:
 
 def main() -> int:
     if not SRC.is_file():
-        print(f"error: missing {SRC}", file=sys.stderr)
+        print(
+            f"error: missing {SRC}; run scripts/generate_arxiv_with_code.sh first",
+            file=sys.stderr,
+        )
         return 1
     if not PREAMBLE.is_file():
         print(f"error: missing {PREAMBLE}", file=sys.stderr)
@@ -519,12 +500,11 @@ def main() -> int:
     _WRITTEN_LISTINGS.clear()
 
     raw = SRC.read_text(encoding="utf-8")
-    body = strip_title_block(raw)
+    body = drop_github_nav(raw)
     body = apply_prose_ascii_fallbacks(body)
     body = inject_model_cards(body)
     body = strip_html_comments(body)
     body = drop_composer_appendices(body)
-    body = format_lean_code_github_links(body)
     body = normalize_appendix_headings(body)
     abstract_md, body = extract_abstract(body)
     body = strip_manual_section_numbers(body)
@@ -551,7 +531,7 @@ def main() -> int:
     note = "updated" if changed else "unchanged"
     print(
         f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size:,} bytes, "
-        f"from arxiv.md, GitHub-link appendix, {n_listings} snippet listings, "
+        f"full Lean appendix, {n_listings} listings, "
         f"{n_figures} mermaid figures, {note})"
     )
     return 0
