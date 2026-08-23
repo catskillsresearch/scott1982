@@ -26,10 +26,14 @@
     "Scott1982.InfoSys.funion_left_comm",
     "Scott1982.InfoSys.funion_left_comm'",
     "Scott1982.InfoSys.funBot_property",
-    "Scott1982.Constructive.insert_comm'"
+    "Scott1982.Constructive.insert_comm'",
+    "Scott1982.Constructive.decidableEq_finset_eq_of_subset",
+    "Scott1982.Constructive.decidableEq_finset_false_of_ne",
+    "Scott1982.InfoSys.mkFunToken_property"
   ],
   "definition_names": [
     "Scott1982.Constructive.funion",
+    "Scott1982.Constructive.decidableEq_finset",
     "Scott1982.InfoSys.EntSet",
     "Scott1982.InfoSys.FunToken",
     "Scott1982.InfoSys.funBot",
@@ -38,6 +42,7 @@
     "Scott1982.InfoSys.FunCon",
     "Scott1982.InfoSys.FunEnt",
     "Scott1982.InfoSys.functionSystem",
+    "Scott1982.InfoSys.mkFunToken",
     "Scott1982.InfoSys.approxMap_toElement",
     "Scott1982.InfoSys.element_toApproxMap"
   ],

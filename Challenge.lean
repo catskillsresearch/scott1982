@@ -55,17 +55,26 @@ def funion (u v : Finset α) : Finset α := Multiset.foldr insert u v.1
 
 @[inherit_doc] infixl:65 " ∪' " => funion
 
+omit [DecidableEq α] in
+/-- If mutual subset holds, the finsets are equal. -/
+theorem decidableEq_finset_eq_of_subset (s t : Finset α) (h : s ⊆ t ∧ t ⊆ s) : s = t := by
+  sorry
+
+omit [DecidableEq α] in
+/-- Mutual subset is required for finset equality in this decidable instance. -/
+theorem decidableEq_finset_false_of_ne (s t : Finset α) (h : ¬(s ⊆ t ∧ t ⊆ s)) (heq : s = t) :
+    False := by
+  sorry
+
 /-- Choice-free decidable equality for `Finset`.
 mathlib's `Finset.decidableEq` goes through `Multiset` quotients and pulls
 `Classical.choice`; this version uses only decidable membership and subset. -/
 def decidableEq_finset {α : Type*} [DecidableEq α] : DecidableEq (Finset α) :=
   fun s t =>
     if h : s ⊆ t ∧ t ⊆ s then
-      isTrue (Finset.Subset.antisymm h.1 h.2)
+      isTrue (decidableEq_finset_eq_of_subset s t h)
     else
-      isFalse fun heq => by
-        subst heq
-        exact h ⟨Finset.Subset.refl _, Finset.Subset.refl _⟩
+      isFalse (decidableEq_finset_false_of_ne s t h)
 
 end Scott1982.Constructive
 
@@ -249,10 +258,15 @@ def functionSystem : InfoSys (FunToken A B) where
   ent_refl := functionSystem_ent_refl A B
   ent_trans := functionSystem_ent_trans A B
 
+/-- Consistency of a packaged function-space token. -/
+theorem mkFunToken_property (u : Finset α) (v : Finset β) (hu : u ∈ A.Con) (hv : v ∈ B.Con) :
+    u ∈ A.Con ∧ v ∈ B.Con := by
+  sorry
+
 /-- Package a consistent pair as a function-space token. -/
 def mkFunToken (u : Finset α) (v : Finset β) (hu : u ∈ A.Con) (hv : v ∈ B.Con) :
     FunToken A B :=
-  ⟨(u, v), ⟨hu, hv⟩⟩
+  ⟨(u, v), mkFunToken_property A B u v hu hv⟩
 
 /-- Consistency of the token-set of an approximable map. -/
 theorem approxMap_toElement_consistent (f : ApproximableMap A B)
