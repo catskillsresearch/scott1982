@@ -10,8 +10,8 @@ import Mathlib.Order.Basic
 /-!
 # Scott 1982, Theorem 7.2 (Palomar statement of record)
 
-Ground truth for the wording is
-`sources/Domains_for_Denotational_Semantics.md`. Theorem 7.2 there begins:
+Ground truth for the wording is Scott 1982, Theorem 7.2
+(`sources/Domains_for_Denotational_Semantics.pdf`). That theorem begins:
 
 > If \(\mathbf{A}\), \(\mathbf{B}\), and \(\mathbf{C}\) are information systems,
 > then so is \(\mathbf{A} \to \mathbf{B}\), and the approximable mappings

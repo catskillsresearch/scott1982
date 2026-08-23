@@ -13,8 +13,8 @@ project:
     consistency, and the constructive-witness form of entailment). The
     remaining apply / curry clauses of the same numbered theorem live in
     Scott1982/Theorem72.lean and are not Comparator targets. The informal
-    account is arxiv.md; the working transcription is
-    sources/Domains_for_Denotational_Semantics.md. Lean was written by
+    account is arxiv.md; ground truth for theorem wording is
+    sources/Domains_for_Denotational_Semantics.pdf. Lean was written by
     AI agents under the direction and review of the author. Dana Scott
     did not participate in or endorse this formalization. There is no
     sorry outside the deliberate holes in Challenge.lean, no
@@ -57,8 +57,8 @@ status:
 
 fidelity:
   divergences: >-
-    Working source: sources/Domains_for_Denotational_Semantics.md.
-    Theorem 7.2 there is quoted in Challenge.lean and as theorem_7_2.
+    Ground truth: sources/Domains_for_Denotational_Semantics.pdf.
+    Theorem 7.2 is quoted in Challenge.lean and as theorem_7_2.
     Definition 7.1 tokens are consistent pairs (u, v). Consistency is
     Scott's 7.1(iii). Entailment FunEnt is the constructive witness form
     of 7.1(iv): some s ⊆ w whose inputs are entailed by u' and whose
@@ -80,8 +80,8 @@ sources:
     note: >-
       Primary source. Dana Scott was not contacted and did not participate
       in or endorse this formalization. The compared claim is the first
-      sentence of Theorem 7.2. Working transcription:
-      sources/Domains_for_Denotational_Semantics.md. Narrative inventory:
+      sentence of Theorem 7.2. Repository copy:
+      sources/Domains_for_Denotational_Semantics.pdf. Narrative inventory:
       arxiv.md.
 
   - title: "A Lean 4 Formalization of Scott's Domains for Denotational Semantics (1982)"
@@ -189,7 +189,7 @@ alignment:
   namespace: "Scott1982.InfoSys"
   statements:
     - source: >-
-        sources/Domains_for_Denotational_Semantics.md, Theorem 7.2:
+        Scott 1982, Theorem 7.2 (sources/Domains_for_Denotational_Semantics.pdf):
         If A, B, and C are information systems, then so is A → B, and
         the approximable mappings f : A → B are exactly the elements
         f ∈ |A → B|.

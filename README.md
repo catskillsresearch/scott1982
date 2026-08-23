@@ -18,7 +18,7 @@ The compared Palomar claim is **only** the first sentence of Theorem 7.2
 | File | Role |
 |---|---|
 | `arxiv.md` | Formalization narrative and theorem inventory |
-| `sources/Domains_for_Denotational_Semantics.md` | Transcribed source text (Scott 1982) |
+| `sources/Domains_for_Denotational_Semantics.pdf` | Scott 1982 source paper (repository copy) |
 | `Scott1982/` | Sorry-free formalization of the paper |
 | `Challenge.lean` | Palomar statement of record: Theorem 7.2, first sentence |
 | `Solution.lean` | Palomar solution module: imports `Scott1982/*` proofs |

@@ -131,8 +131,7 @@ flowchart TD
 ### Source material
 
 Primary source: Dana Scott, *Domains for Denotational Semantics*, ICALP 1982, LNCS 140.
-Working OCR: [`sources/Domains_for_Denotational_Semantics.md`](sources/Domains_for_Denotational_Semantics.md)
-(`extraction_method: cursor-vision-triple-merge`).
+Repository copy: [`sources/Domains_for_Denotational_Semantics.pdf`](sources/Domains_for_Denotational_Semantics.pdf).
 
 ### Numbering
 
@@ -822,4 +821,4 @@ verbatim Lean source (complete appendix, one subsection per module). Order match
 * [Factoid84.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/Factoid84.lean)
 * [DomainEquation.lean](https://github.com/catskillsresearch/scott1982/blob/main/Scott1982/DomainEquation.lean)
 
-Vision transcript: [`sources/Domains_for_Denotational_Semantics.md`](https://github.com/catskillsresearch/scott1982/blob/main/sources/Domains_for_Denotational_Semantics.md).
+Source paper: [`sources/Domains_for_Denotational_Semantics.pdf`](https://github.com/catskillsresearch/scott1982/blob/main/sources/Domains_for_Denotational_Semantics.pdf).

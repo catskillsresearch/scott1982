@@ -30,8 +30,8 @@ MODEL_CARDS: tuple[ModelCard, ...] = (
         cite_key="Cur26",
         tool_note=(
             "agent-assisted editing in the Cursor IDE: formalizing Scott's 1982 "
-            "information-system layer in Lean 4 / mathlib, `lake build` repair, vision-OCR "
-            "transcription of `sources/Domains_for_Denotational_Semantics.md`, drafting this "
+            "information-system layer in Lean 4 / mathlib, `lake build` repair, working from "
+            "the Scott 1982 source PDF, drafting this "
             "narrative (`arxiv.md`), and tracking the formalized inventory. Generated Lean was "
             "provisional until it compiled under the pinned toolchain. Also used in the sibling "
             "formalizations whose portable work may be copied into this repo."
