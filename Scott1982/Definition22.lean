@@ -18,7 +18,9 @@ namespace Scott1982
 
 namespace InfoSys
 
-variable {α : Type*} [DecidableEq α] (sys : InfoSys α)
+universe u
+
+variable {α : Type u} [DecidableEq α] (sys : InfoSys α)
 
 /-- **Definition 2.2 (Scott 1982).** Set-level entailment: `EntSet u v` means
 `u ⊢ X` for every `X ∈ v`. -/

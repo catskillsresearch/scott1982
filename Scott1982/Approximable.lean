@@ -21,7 +21,9 @@ open Scott1982.Constructive
 
 namespace InfoSys
 
-variable {α β : Type*} [DecidableEq α] [DecidableEq β]
+universe u v
+
+variable {α : Type u} {β : Type v} [DecidableEq α] [DecidableEq β]
 
 /-- **Definition 5.1 (Scott 1982).** Approximable mapping between information systems. -/
 structure ApproximableMap (A : InfoSys α) (B : InfoSys β) where

@@ -44,12 +44,14 @@ matching Scott's emphasis on the constructive nature of the definitions.
 
 namespace Scott1982
 
+universe u
+
 /-- A Scott information system on a type of tokens `α`, following Scott's Definition 2.1
 in *"Domains for Denotational Semantics"* (ICALP 1982).
 
 `DecidableEq α` is required so that finite token sets support union (`X ∪ {a}`) and the
 other `Finset` operations the axioms mention. -/
-structure InfoSys (α : Type*) [DecidableEq α] where
+structure InfoSys (α : Type u) [DecidableEq α] where
   /-- The distinguished least-informative object `Δ`. -/
   bot : α
   /-- The consistent finite sets of tokens. -/
@@ -76,7 +78,7 @@ structure InfoSys (α : Type*) [DecidableEq α] where
 
 namespace InfoSys
 
-variable {α : Type*} [DecidableEq α] (sys : InfoSys α)
+variable {α : Type u} [DecidableEq α] (sys : InfoSys α)
 
 /-- An *element* (ideal) of the domain: a set of tokens that is consistent on every
 finite subset and closed under entailment. -/
@@ -88,21 +90,39 @@ structure Element where
   /-- The element is closed under entailment. -/
   closed : ∀ (Y : Finset α) (a : α), (Y : Set α) ⊆ carrier → sys.Ent Y a → a ∈ carrier
 
+/-- Extensional equality of elements. -/
+theorem Element.ext {x y : sys.Element} (h : x.carrier = y.carrier) : x = y := by
+  cases x
+  cases y
+  subst h
+  rfl
+
+/-- Reflexivity of the carrier-inclusion order. -/
+theorem element_le_refl (x : sys.Element) : x.carrier ⊆ x.carrier :=
+  Set.Subset.refl _
+
+/-- Transitivity of the carrier-inclusion order. -/
+theorem element_le_trans (x y z : sys.Element)
+    (hxy : x.carrier ⊆ y.carrier) (hyz : y.carrier ⊆ z.carrier) :
+    x.carrier ⊆ z.carrier :=
+  Set.Subset.trans hxy hyz
+
+/-- Antisymmetry of the carrier-inclusion order. -/
+theorem element_le_antisymm (x y : sys.Element)
+    (hxy : x.carrier ⊆ y.carrier) (hyx : y.carrier ⊆ x.carrier) :
+    x = y :=
+  Element.ext sys (Set.Subset.antisymm hxy hyx)
+
 /-- Elements are ordered by inclusion of their carriers; this is the Scott ordering. -/
 instance : PartialOrder sys.Element where
   le x y := x.carrier ⊆ y.carrier
-  le_refl _ := Set.Subset.refl _
-  le_trans _ _ _ h1 h2 := Set.Subset.trans h1 h2
-  le_antisymm x y h1 h2 := by
-    -- Elements are determined by their carriers (the remaining fields are `Prop`s,
-    -- closed by definitional proof irrelevance), so equality reduces to carrier
-    -- antisymmetry. We avoid `congr` here because it pulls in `Classical.choice`;
-    -- `subst` + `rfl` keeps the development constructive.
-    have hc : x.carrier = y.carrier := Set.Subset.antisymm h1 h2
-    cases x
-    cases y
-    subst hc
-    rfl
+  le_refl := element_le_refl sys
+  le_trans := element_le_trans sys
+  le_antisymm := element_le_antisymm sys
+
+/-- Empty set is consistent (subset of any singleton). -/
+theorem con_empty : (∅ : Finset α) ∈ sys.Con :=
+  sys.con_subset (sys.con_sing sys.bot) (Finset.empty_subset _)
 
 end InfoSys
 
