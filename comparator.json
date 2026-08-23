@@ -5,6 +5,13 @@
     "Scott1982.InfoSys.theorem_7_2",
     "Scott1982.InfoSys.element_toApproxMap_approxMap_toElement",
     "Scott1982.InfoSys.approxMap_toElement_element_toApproxMap",
+    "Scott1982.InfoSys.approxMap_toElement_consistent",
+    "Scott1982.InfoSys.approxMap_toElement_closed",
+    "Scott1982.InfoSys.element_toApproxMap_rel_dom",
+    "Scott1982.InfoSys.element_toApproxMap_rel_cod",
+    "Scott1982.InfoSys.element_toApproxMap_empty_rel",
+    "Scott1982.InfoSys.element_toApproxMap_union_right",
+    "Scott1982.InfoSys.element_toApproxMap_mono",
     "Scott1982.InfoSys.functionSystem_con_subset",
     "Scott1982.InfoSys.functionSystem_con_sing",
     "Scott1982.InfoSys.functionSystem_ent_con",
@@ -18,7 +25,8 @@
     "Scott1982.InfoSys.con_empty",
     "Scott1982.InfoSys.funion_left_comm",
     "Scott1982.InfoSys.funion_left_comm'",
-    "Scott1982.InfoSys.funBot_property"
+    "Scott1982.InfoSys.funBot_property",
+    "Scott1982.Constructive.insert_comm'"
   ],
   "definition_names": [
     "Scott1982.Constructive.funion",
@@ -29,7 +37,9 @@
     "Scott1982.InfoSys.funOutputUnion",
     "Scott1982.InfoSys.FunCon",
     "Scott1982.InfoSys.FunEnt",
-    "Scott1982.InfoSys.functionSystem"
+    "Scott1982.InfoSys.functionSystem",
+    "Scott1982.InfoSys.approxMap_toElement",
+    "Scott1982.InfoSys.element_toApproxMap"
   ],
   "permitted_axioms": ["propext", "Quot.sound"]
 }

@@ -6,7 +6,6 @@ Authors: Lars Warren Ericson.
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Order.Basic
-import Scott1982.Constructive
 
 /-!
 # Scott 1982, Theorem 7.2 (Palomar statement of record)
@@ -26,11 +25,49 @@ form of 7.1(iv). The remaining `apply` / `curry` clauses of the same numbered
 theorem are proved in `Scott1982/Theorem72.lean` and are not Comparator
 targets.
 
-This file imports Mathlib and the choice-free `Finset` prelude
-`Scott1982.Constructive` (needed to state 7.1 without `Classical.choice`
-unions). The proofs live in `Scott1982/*` and are compared against this file
-by Comparator via `Solution.lean`.
+This file imports Mathlib only. The choice-free `Finset` union `∪'` and
+`decidableEq_finset` are restated here so the Challenge import closure
+contains no project-local source. The proofs live in `Scott1982/*` and are
+compared against this file by Comparator via `Solution.lean`.
+
+The compared theorem is restricted to information systems whose token types
+have `DecidableEq`, which is required to form the `Finset` operations used
+in Definitions 2.1, 5.1, and 7.1.
 -/
+
+namespace Scott1982.Constructive
+
+variable {α : Type*} [DecidableEq α]
+
+/-- Choice-free commutativity of `insert` (mathlib's `Finset.insert_comm` is choice-tainted).
+Needed to fold `insert` over a `Multiset`. -/
+theorem insert_comm' (a b : α) (s : Finset α) :
+    insert a (insert b s) = insert b (insert a s) := by
+  sorry
+
+instance instLeftCommutativeInsert :
+    LeftCommutative (insert : α → Finset α → Finset α) := ⟨insert_comm'⟩
+
+/-- Choice-free binary union of finite sets, obtained by folding `insert` over the second
+argument's underlying multiset. Definitionally equal in content to `u ∪ v`, but — unlike
+mathlib's `(· ∪ ·)` — free of any `Classical.choice` dependency. -/
+def funion (u v : Finset α) : Finset α := Multiset.foldr insert u v.1
+
+@[inherit_doc] infixl:65 " ∪' " => funion
+
+/-- Choice-free decidable equality for `Finset`.
+mathlib's `Finset.decidableEq` goes through `Multiset` quotients and pulls
+`Classical.choice`; this version uses only decidable membership and subset. -/
+def decidableEq_finset {α : Type*} [DecidableEq α] : DecidableEq (Finset α) :=
+  fun s t =>
+    if h : s ⊆ t ∧ t ⊆ s then
+      isTrue (Finset.Subset.antisymm h.1 h.2)
+    else
+      isFalse fun heq => by
+        subst heq
+        exact h ⟨Finset.Subset.refl _, Finset.Subset.refl _⟩
+
+end Scott1982.Constructive
 
 namespace Scott1982
 
@@ -217,13 +254,73 @@ def mkFunToken (u : Finset α) (v : Finset β) (hu : u ∈ A.Con) (hv : v ∈ B.
     FunToken A B :=
   ⟨(u, v), ⟨hu, hv⟩⟩
 
+/-- Consistency of the token-set of an approximable map. -/
+theorem approxMap_toElement_consistent (f : ApproximableMap A B)
+    (Y : Finset (FunToken A B))
+    (hY : (Y : Set (FunToken A B)) ⊆ {p : FunToken A B | f.rel p.val.1 p.val.2}) :
+    Y ∈ (functionSystem A B).Con := by
+  sorry
+
+/-- Deductive closure of the token-set of an approximable map. -/
+theorem approxMap_toElement_closed (f : ApproximableMap A B)
+    (Y : Finset (FunToken A B)) (p : FunToken A B)
+    (hY : (Y : Set (FunToken A B)) ⊆ {p : FunToken A B | f.rel p.val.1 p.val.2})
+    (hEnt : (functionSystem A B).Ent Y p) :
+    p ∈ {q : FunToken A B | f.rel q.val.1 q.val.2} := by
+  sorry
+
 /-- Approximable map as an element of `|A → B|`. -/
-def approxMap_toElement (f : ApproximableMap A B) : (functionSystem A B).Element := by
+def approxMap_toElement (f : ApproximableMap A B) : (functionSystem A B).Element where
+  carrier := {p : FunToken A B | f.rel p.val.1 p.val.2}
+  consistent := approxMap_toElement_consistent A B f
+  closed := approxMap_toElement_closed A B f
+
+/-- Domain of the relation recovered from a function-space element. -/
+theorem element_toApproxMap_rel_dom (x : (functionSystem A B).Element) :
+    ∀ {u : Finset α} {v : Finset β},
+      (∃ (hu : u ∈ A.Con) (hv : v ∈ B.Con), mkFunToken A B u v hu hv ∈ x.carrier) →
+      u ∈ A.Con :=
+  fun ⟨hu, _, _⟩ => hu
+
+/-- Codomain of the relation recovered from a function-space element. -/
+theorem element_toApproxMap_rel_cod (x : (functionSystem A B).Element) :
+    ∀ {u : Finset α} {v : Finset β},
+      (∃ (hu : u ∈ A.Con) (hv : v ∈ B.Con), mkFunToken A B u v hu hv ∈ x.carrier) →
+      v ∈ B.Con :=
+  fun ⟨_, hv, _⟩ => hv
+
+/-- The empty pair is related. -/
+theorem element_toApproxMap_empty_rel (x : (functionSystem A B).Element) :
+    ∃ (hu : (∅ : Finset α) ∈ A.Con) (hv : (∅ : Finset β) ∈ B.Con),
+      mkFunToken A B ∅ ∅ hu hv ∈ x.carrier := by
+  sorry
+
+/-- Output-union of two related pairs remains related. -/
+theorem element_toApproxMap_union_right (x : (functionSystem A B).Element) :
+    ∀ {u : Finset α} {v v' : Finset β},
+      (∃ (hu : u ∈ A.Con) (hv : v ∈ B.Con), mkFunToken A B u v hu hv ∈ x.carrier) →
+      (∃ (hu : u ∈ A.Con) (hv : v' ∈ B.Con), mkFunToken A B u v' hu hv ∈ x.carrier) →
+      ∃ (hu : u ∈ A.Con) (hv : v ∪' v' ∈ B.Con),
+        mkFunToken A B u (v ∪' v') hu hv ∈ x.carrier := by
+  sorry
+
+/-- The recovered relation is monotone for entailment. -/
+theorem element_toApproxMap_mono (x : (functionSystem A B).Element) :
+    ∀ {u u' : Finset α} {v v' : Finset β},
+      (∃ (hu : u ∈ A.Con) (hv : v ∈ B.Con), mkFunToken A B u v hu hv ∈ x.carrier) →
+      A.EntSet u' u → B.EntSet v v' → u' ∈ A.Con → v' ∈ B.Con →
+      ∃ (hu : u' ∈ A.Con) (hv : v' ∈ B.Con),
+        mkFunToken A B u' v' hu hv ∈ x.carrier := by
   sorry
 
 /-- Element of `|A → B|` as an approximable map. -/
-def element_toApproxMap (x : (functionSystem A B).Element) : ApproximableMap A B := by
-  sorry
+def element_toApproxMap (x : (functionSystem A B).Element) : ApproximableMap A B where
+  rel u v := ∃ (hu : u ∈ A.Con) (hv : v ∈ B.Con), mkFunToken A B u v hu hv ∈ x.carrier
+  rel_dom := element_toApproxMap_rel_dom A B x
+  rel_cod := element_toApproxMap_rel_cod A B x
+  empty_rel := element_toApproxMap_empty_rel A B x
+  union_right := element_toApproxMap_union_right A B x
+  mono := element_toApproxMap_mono A B x
 
 /-- Round-trip: every approximable map is recovered from its element. -/
 theorem element_toApproxMap_approxMap_toElement (f : ApproximableMap A B) :

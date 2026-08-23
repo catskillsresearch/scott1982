@@ -54,7 +54,8 @@ theorem insert_comm' (a b : α) (s : Finset α) :
   · rintro (h | h | h)
     exacts [Or.inr (Or.inl h), Or.inl h, Or.inr (Or.inr h)]
 
-instance : LeftCommutative (insert : α → Finset α → Finset α) := ⟨insert_comm'⟩
+instance instLeftCommutativeInsert :
+    LeftCommutative (insert : α → Finset α → Finset α) := ⟨insert_comm'⟩
 
 /-- Choice-free binary union of finite sets, obtained by folding `insert` over the second
 argument's underlying multiset. Definitionally equal in content to `u ∪ v`, but — unlike

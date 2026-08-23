@@ -7,6 +7,14 @@ step() {
   printf '\n== %s ==\n' "$1"
 }
 
+step "Reject project-local Challenge imports"
+if rg -n '^import[[:space:]]+Scott1982(\.|$)' Challenge.lean; then
+  echo "FAIL: Challenge.lean imports project-local source."
+  echo "Palomar allows only Lean core / Mathlib / Tau Ceti / CSLib in the Challenge closure."
+  exit 1
+fi
+echo "OK: Challenge.lean import closure has no project-local source."
+
 step "Validate Comparator configuration"
 python3 - <<'PY'
 import json

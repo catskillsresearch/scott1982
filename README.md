@@ -41,6 +41,7 @@ bash scripts/palomar_preflight.sh
 ```
 
 Pinned: Lean / mathlib **v4.30.0** (`lean-toolchain`).
-`Challenge.lean` imports Mathlib and `Scott1982.Constructive` so Definition 7.1
-can be stated with choice-free `Finset` union. The compared theorem is intended
-to use `propext` and `Quot.sound` only.
+`Challenge.lean` imports Mathlib only and restates the choice-free `Finset`
+union so Definition 7.1 can be stated without `Classical.choice` and without
+a project-local import. The compared theorem is intended to use `propext` and
+`Quot.sound` only. Token types are assumed to have `DecidableEq`.

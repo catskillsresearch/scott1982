@@ -8,7 +8,7 @@ project:
     *Domains for Denotational Semantics*. The Palomar compared result is
     only the first sentence of Theorem 7.2: if A and B are information
     systems, then so is A → B, and the approximable mappings f : A → B
-    are exactly the elements f ∈ |A → B|. Challenge.lean locks Definition
+    are exactly the elements f ∈ |A → B|. Challenge.lean imports Mathlib only and locks Definition
     2.1, Definition 2.2, Definition 5.1, and Definition 7.1 (tokens,
     consistency, and the constructive-witness form of entailment). The
     remaining apply / curry clauses of the same numbered theorem live in
@@ -63,14 +63,17 @@ fidelity:
     Scott's 7.1(iii). Entailment FunEnt is the constructive witness form
     of 7.1(iv): some s ⊆ w whose inputs are entailed by u' and whose
     output-union entails v', avoiding an undecidable filter on EntSet.
-    Finset unions in the locked bodies are the choice-free ∪' from
-    Scott1982.Constructive. The apply / curry clauses of Theorem 7.2 are
-    proved in the library and are not Comparator targets.
+    Finset unions in the locked bodies are the choice-free ∪' restated
+    in Challenge.lean (and proved in Scott1982.Constructive). The apply /
+    curry clauses of Theorem 7.2 are proved in the library and are not
+    Comparator targets. The compared statements assume DecidableEq on
+    token types so the Finset operations of Definitions 2.1, 5.1, and 7.1
+    can be formed.
 
 sources:
   - title: "Domains for Denotational Semantics"
     authors: ["Dana S. Scott"]
-    type: "article"
+    type: "paper"
     location: "In: Automata, Languages and Programming (ICALP 1982), LNCS 140, Springer, 1982. Theorem 7.2."
     relationship: formalizes
     author_endorsement: not-contacted
@@ -83,7 +86,7 @@ sources:
 
   - title: "A Lean 4 Formalization of Scott's Domains for Denotational Semantics (1982)"
     authors: ["Lars Warren Ericson"]
-    type: "article"
+    type: "other"
     relationship: other
     author_endorsement: participated
     note: >-
@@ -171,8 +174,13 @@ limitations:
     arxiv.md.
   - >-
     The compared theorem is intended to depend only on propext and
-    Quot.sound. Challenge.lean imports Scott1982.Constructive so the
-    statement can use choice-free Finset union.
+    Quot.sound. Challenge.lean restates the choice-free Finset union
+    locally so its import closure is Mathlib-only.
+  - >-
+    The compared statements assume DecidableEq on both token types.
+    Scott's informal account is for arbitrary information systems; this
+    is an implementation restriction needed for Finset operations, not an
+    extra mathematical hypothesis on consistency or entailment.
   - >-
     Challenge.lean states the claim with deliberate sorries; Solution.lean
     and Scott1982/* supply the proofs.
