@@ -2146,7 +2146,7 @@ def IsLamWF : RawLamToken α → Prop
   | .funTok xs ys => LamConDepth A (listToFinset xs) ∧ LamConDepth A (listToFinset ys)
 
 /-- Carrier of `lambdaSystem`. -/
-def LamDToken : Type _ := { t : RawLamToken α // IsLamWF A t }
+abbrev LamDToken : Type _ := { t : RawLamToken α // IsLamWF A t }
 
 instance : DecidableEq (LamDToken A) := Subtype.instDecidableEq
 

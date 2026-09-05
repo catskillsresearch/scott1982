@@ -85,8 +85,7 @@ theorem proposition_2_3_ii {u v : Finset α} (hu : u ∈ sys.Con) (h : sys.EntSe
     intro s
     refine Finset.induction_on s ?_ ?_
     · intro _
-      -- foldr insert u 0 = u
-      simpa [funion, Multiset.foldr] using hu
+      simpa [funion_empty] using hu
     · intro a t _ha ih hmem
       have hEnt_u_a : sys.Ent u a := h a (hmem a (Finset.mem_insert_self a t))
       have hut : u ∪' t ∈ sys.Con := ih fun x hx => hmem x (Finset.mem_insert_of_mem hx)

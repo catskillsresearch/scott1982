@@ -46,12 +46,12 @@ status:
     to lock these concrete definition bodies.
   sorry_count: 0
   sorry_in_definitions: 0
-  axioms: ["propext", "Quot.sound"]
+  axioms: ["propext", "Classical.choice", "Quot.sound"]
   main_results:
     - declaration: "Scott1982.InfoSys.theorem_7_2"
       file: "Scott1982/Theorem72.lean"
       sorry_count: 0
-      axioms: ["propext", "Quot.sound"]
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
       comparator_config: "comparator.json"
       literature_dependencies: []
 
@@ -173,9 +173,11 @@ limitations:
     and the definitions it mentions, not the full paper inventory in
     arxiv.md.
   - >-
-    The compared theorem is intended to depend only on propext and
-    Quot.sound. Challenge.lean restates the choice-free Finset union
-    locally so its import closure is Mathlib-only.
+    The compared theorem depends on propext, Classical.choice, and
+    Quot.sound. Under Lean / mathlib v4.33, Classical.choice enters via
+    Mathlib Finset membership (e.g. Finset.mem_insert). Challenge.lean
+    still restates the choice-avoiding Finset union ∪' locally so its
+    import closure is Mathlib-only.
   - >-
     The compared statements assume DecidableEq on both token types.
     Scott's informal account is for arbitrary information systems; this

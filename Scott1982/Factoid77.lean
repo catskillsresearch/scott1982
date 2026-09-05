@@ -28,6 +28,11 @@ unaffected.
 
 universe u
 
+-- Lean 4.33 defaults to respecting transparency in isDefEq, so category Hom / ⊗
+-- projections no longer unify with Scott `productSystem` / `ApproximableMap`.
+-- Restore the pre-4.33 behavior for this category packaging file.
+set_option backward.isDefEq.respectTransparency false
+
 namespace Scott1982
 
 open Scott1982.Constructive
@@ -49,15 +54,15 @@ attribute [instance] InfoSysObj.decEq
 
 namespace InfoSysObj
 
-def prod (A B : InfoSysObj) : InfoSysObj where
+abbrev prod (A B : InfoSysObj) : InfoSysObj where
   Token := ProdToken A.sys B.sys
   sys := productSystem A.sys B.sys
 
-def exp (A B : InfoSysObj) : InfoSysObj where
+abbrev exp (A B : InfoSysObj) : InfoSysObj where
   Token := FunToken A.sys B.sys
   sys := functionSystem A.sys B.sys
 
-def unit : InfoSysObj where
+abbrev unit : InfoSysObj where
   Token := PUnit
   sys := unitSystem
 
@@ -67,7 +72,7 @@ end InfoSysObj
 
 namespace ApproximableMap
 
-def acomp {α β γ : Type*} [DecidableEq α] [DecidableEq β] [DecidableEq γ]
+abbrev acomp {α β γ : Type*} [DecidableEq α] [DecidableEq β] [DecidableEq γ]
     {A : InfoSys α} {B : InfoSys β} {C : InfoSys γ}
     (f : ApproximableMap A B) (g : ApproximableMap B C) : ApproximableMap A C :=
   ApproximableMap.comp g f
@@ -302,11 +307,10 @@ theorem uncurryRight_toElement (A Y Z : InfoSysObj.{u})
           (φ.toElement ((fstMap Y.sys A.sys).toElement
             ((swapMap A.sys Y.sys).toElement q)))).toElement
         ((sndMap Y.sys A.sys).toElement ((swapMap A.sys Y.sys).toElement q)) := by
+  -- `acomp` is now an abbrev, so `simp` already exposes nested `toElement`s;
+  -- rewrite those rather than `change`-ing back to a `comp` form.
   simp only [uncurryRight, acomp_toElement, uncurryMap]
-  change (ApproximableMap.comp (applyMap (B := A.sys) (C := Z.sys))
-      (pairMap _ _ (ApproximableMap.comp φ (fstMap _ _)) (sndMap _ _))).toElement
-    ((swapMap A.sys Y.sys).toElement q) = _
-  rw [comp_toElement, pair_after_swap_toElement A Y Z φ q, applyMap_toElement]
+  rw [pair_after_swap_toElement A Y Z φ q, applyMap_toElement]
 
 theorem uncurryRight_comp_left (A : InfoSysObj.{u}) {Y Y' Z : InfoSysObj.{u}}
     (f : Y' ⟶ Y) (g : Y ⟶ InfoSysObj.exp A Z) :
@@ -338,7 +342,6 @@ theorem tensorExpEquiv_natural (A : InfoSysObj.{u}) {Y' Y Z : InfoSysObj.{u}}
   have h := uncurryRight_comp_left A f (curryRight A Y Z g)
   rw [uncurryRight_curryRight] at h
   rw [uncurryRight_curryRight, h]
-  rfl
 
 /-- Right adjoint to `tensorLeft A` from the curry equivalence. -/
 noncomputable def expFunctor (A : InfoSysObj.{u}) : InfoSysObj.{u} ⥤ InfoSysObj.{u} :=

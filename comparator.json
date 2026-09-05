@@ -46,5 +46,5 @@
     "Scott1982.InfoSys.approxMap_toElement",
     "Scott1982.InfoSys.element_toApproxMap"
   ],
-  "permitted_axioms": ["propext", "Quot.sound"]
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
 }
