@@ -9,8 +9,10 @@ Lean 4 formalization of Dana Scott's **1982** *Domains for Denotational Semantic
 Includes a choice-free `Finset` prelude (`Scott1982.Constructive`) and `Scott1982.InfoSys`.
 
 Standalone package — no dependency on the 1972/1980 formalizations. Cross-presentation
-equivalence theorems live in [`scott_models`](../scott_models); this repo is packaged for
-[Palomar](https://palomar-registry.org/about) on its own (see `PROVENANCE.md`).
+equivalence theorems live in [`scott_models`](../scott_models); this repo is registered
+with [Palomar](https://palomar-registry.org/about) on its own as
+[PALOMAR-2026-08-24-000005](https://palomar-registry.org/entry?id=PALOMAR-2026-08-24-000005&version=1)
+(see `PROVENANCE.md`).
 The compared Palomar claim is **only** the first sentence of Theorem 7.2
 (approximable maps `A → B` are the elements of `|A → B|`), not the `apply` /
 `curry` clauses and not the whole paper.
@@ -42,7 +44,7 @@ Palomar submission, run:
 bash scripts/palomar_preflight.sh
 ```
 
-Pinned: Lean / mathlib **v4.30.0** (`lean-toolchain`).
+Pinned: Lean / mathlib **v4.33.0** (`lean-toolchain`).
 `Challenge.lean` imports Mathlib only and restates the choice-free `Finset`
 union so Definition 7.1 can be stated without `Classical.choice` and without
 a project-local import. The compared theorem is intended to use `propext` and

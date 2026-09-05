@@ -40,6 +40,9 @@ _WRITTEN_LISTINGS: set[Path] = set()
 AUTHOR = "Lars Warren Ericson"
 COMPANY = "Catskills Research Company"
 GITHUB_URL = r"https://github.com/catskillsresearch/scott1982"
+PALOMAR_URL = (
+    r"https://palomar-registry.org/entry?id=PALOMAR-2026-08-24-000005&version=1"
+)
 ORCID = "0000-0001-8299-9361"
 EMAIL = "lars.ericson@catskillsresearch.com"
 
@@ -452,6 +455,7 @@ def cleanup_abstract_latex(latex: str) -> str:
     latex = latex.replace("\\textbf{{[}", "\\textbf{[")
     latex = latex.replace("\\texttt{{[}", "\\texttt{[")
     latex = latex.replace("{]}}", "]}")
+    latex = re.sub(r"\\tightlist\n", "", latex)
     latex = re.sub(r"\\begin\{center\}\\rule\{.*?\}\\end\{center\}\s*", "", latex, flags=re.DOTALL)
     return latex
 
@@ -462,8 +466,8 @@ def build_title_page(abstract_latex: str) -> str:
         \\title{{\\textbf{{{TITLE}}}}}
 
         \\author[1]{{\\textbf{{{AUTHOR}}}}}
+        \\affil[1]{{ORCID: {ORCID}}}
         \\affil[1]{{{COMPANY}}}
-        \\affil[1]{{\\url{{{GITHUB_URL}}}}}
         \\affil[1]{{\\texttt{{{EMAIL}}}}}
 
         \\date{{\\today}}
@@ -474,7 +478,8 @@ def build_title_page(abstract_latex: str) -> str:
 
         \\begin{{center}}
           \\small
-          \\textbf{{ORCID:}} {ORCID}
+          \\textbf{{Github:}} \\url{{{GITHUB_URL}}} \\\\
+          \\textbf{{Palomar Registration:}} \\url{{{PALOMAR_URL}}}
         \\end{{center}}
 
         \\begin{{abstract}}

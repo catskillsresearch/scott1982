@@ -737,7 +737,7 @@ lake exe cache get
 lake build Scott1982
 ```
 
-Pinned: Lean / mathlib **v4.30.0**.
+Pinned: Lean / mathlib **v4.33.0**.
 
 Acknowledgments (Dana Scott **[Sco82]**, AI tool cards, artifact URL) are injected before
 References when building `arxiv.tex` via `scripts/ai_model_cards.py` — they are not kept in

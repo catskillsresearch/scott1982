@@ -11,7 +11,7 @@ Scott. The source paper is cited as literature only.
 Cross-presentation equivalence theorems for Scott's 1972 / 1980 / 1982
 material live in
 [`catskillsresearch/scott_models`](https://github.com/catskillsresearch/scott_models).
-**This repository is submitted to Palomar on its own**, for the 1982
+**This repository is registered with Palomar on its own**, for the 1982
 paper alone, following the same Challenge / Solution pattern as
 [`catskillsresearch/scott1972`](https://github.com/catskillsresearch/scott1972)
 and
@@ -23,5 +23,6 @@ mappings `A → B` are exactly the elements of `|A → B|`. The remaining
 `apply` / `curry` clauses of Theorem 7.2 are proved in the library and
 are not Comparator targets. The §§1–8 development lives in `Scott1982/*`.
 
-Palomar reviews and, if registered, preserves a pinned commit of *this*
-repository.
+This formalization is registered in the Palomar registry as
+[PALOMAR-2026-08-24-000005](https://palomar-registry.org/entry?id=PALOMAR-2026-08-24-000005&version=1)
+(version 1). Palomar preserves a pinned commit of *this* repository.
