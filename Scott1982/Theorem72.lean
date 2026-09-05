@@ -214,11 +214,7 @@ theorem element_toApproxMap_union_right (x : (functionSystem A B).Element) :
         subst this
         exact proposition_2_3_iii A hu
     · have houtEq : funOutputUnion A B w = v' ∪' v := by
-        -- Unfold `w` only after applying the insert/singleton lemmas; Lean 4.33
-        -- otherwise reduces `insert q {p}` to a set literal that no longer matches.
-        dsimp only [w]
-        rw [funOutputUnion_insert, funOutputUnion_singleton]
-        rfl
+        simp only [w, q, p, funOutputUnion_insert, funOutputUnion_singleton, mkFunToken]
       rw [houtEq, funion_comm_β]
       exact proposition_2_3_iii B hvU
   exact x.closed w r hwsub hEnt
@@ -263,9 +259,10 @@ theorem element_toApproxMap_approxMap_toElement (f : ApproximableMap A B) :
   refine ApproximableMap.ext fun u v => ?_
   constructor
   · rintro ⟨hu, hv, hp⟩
-    exact (mem_approxMap_toElement A B f).1 hp
+    simpa [mem_approxMap_toElement, mkFunToken] using hp
   · intro hrel
-    exact ⟨f.rel_dom hrel, f.rel_cod hrel, (mem_approxMap_toElement A B f).2 hrel⟩
+    exact ⟨f.rel_dom hrel, f.rel_cod hrel, by
+      simpa [mem_approxMap_toElement, mkFunToken] using hrel⟩
 
 theorem approxMap_toElement_element_toApproxMap (x : (functionSystem A B).Element) :
     approxMap_toElement A B (element_toApproxMap A B x) = x := by

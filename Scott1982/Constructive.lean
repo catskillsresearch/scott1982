@@ -8,25 +8,34 @@ Github:  https://github.com/catskillsresearch/scott1982
 import Mathlib.Data.Finset.Basic
 
 /-!
-# A choice-avoiding `Finset` prelude
+# A choice-free `Finset` prelude
 
-One of the project's goals (Goal 3) is to keep the *information-system* presentation
-of Scott domains as constructive as Mathlib allows. Historically (Lean / mathlib
-`v4.30`) the audited footprint was `[propext, Quot.sound]` with no `Classical.choice`.
-Under Lean / mathlib **`v4.33`**, even core membership lemmas such as
-`Finset.mem_insert` report `Classical.choice` via Multiset quotient machinery, so the
-compared Palomar theorems permit `{propext, Classical.choice, Quot.sound}`.
+One of the project's goals (Goal 3) is to certify that the *information-system*
+presentation of Scott domains can be developed in a **purely constructive** fragment of
+Lean: every result must have a `#print axioms` footprint contained in
+`[propext, Quot.sound]`, with **no `Classical.choice`** and no use of the law of excluded
+middle.
 
-Separately, several Mathlib `Finset` *operations* are still worth avoiding because they
-are choice-heavy beyond bare membership:
+This is harder than it looks, because several of mathlib's `Finset` *operations* and even
+a few basic *lemmas* transitively depend on `Classical.choice` (through the
+`Multiset.dedup` / quotient machinery), in version `v4.30.0`:
 
 * tainted operations: `(· ∪ ·)`, `Finset.image`, `(· ×ˢ ·)`, `Finset.biUnion`, `(· \ ·)`,
   and mathlib's `Finset.decidableEq` (via `Multiset` quotients);
+* tainted lemmas: e.g. `Finset.insert_comm`, `Finset.singleton_subset_iff`;
 * tainted *tactics*: `tauto`, `aesop` (they close goals via classical reasoning).
 
-This file supplies the finite-set operations the development needs but Mathlib only
-offers in more choice-tainted form: a **binary union of `Finset`s**, built by folding
-`insert`, and a **decidable equality** for `Finset` via subset antisymmetry.
+By contrast the following are choice-free and form our working toolkit: `insert`,
+`(· ∩ ·)`, `Finset.filter`, `Finset.fold`, `Multiset.foldr`, the membership/subset lemmas
+(`Finset.mem_insert`, `Finset.mem_singleton`, `Finset.subset_iff`, `Finset.mem_coe`,
+`Finset.coe_subset`, `Finset.mem_inter`, `Finset.ext`), set-level unions/intersections,
+and explicit term-mode/`rintro`/`constructor` proofs.
+
+This file provides the finite-set operations the development needs but mathlib only
+offers in choice-tainted form: a **binary union of `Finset`s**, built choice-free by
+folding `insert`, and a **decidable equality** for `Finset` via subset antisymmetry.
+Every declaration here is audited to depend only on
+`[propext, Quot.sound]`.
 -/
 
 namespace Scott1982.Constructive
@@ -69,12 +78,6 @@ theorem mem_foldr_insert (a : α) (u : Finset α) (s : Multiset α) :
 
 @[simp] theorem mem_funion {a : α} {u v : Finset α} :
     a ∈ u ∪' v ↔ a ∈ u ∨ a ∈ v := mem_foldr_insert a u v.1
-
-/-- Right identity for choice-free union. Prefer this over unfolding `funion` /
-`Multiset.foldr`: under Lean 4.33 that unfolds to an unreduced `Quot.liftOn`. -/
-@[simp] theorem funion_empty (u : Finset α) : u ∪' (∅ : Finset α) = u := by
-  ext x
-  simp only [mem_funion, Finset.notMem_empty, or_false]
 
 /-- The coercion of `u ∪' v` to a `Set` is the (choice-free) set union of the coercions. -/
 theorem coe_funion (u v : Finset α) :

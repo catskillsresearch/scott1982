@@ -263,8 +263,8 @@ theorem fixChain_step_of_rel (f : ApproximableMap A A)
       ↑w' ⊆ (approxMap_toElement A A f).carrier ∧
         FunCon A A w' ∧ FixChain A w' (n + 1) v := by
   let p := mkFunToken A A u v (f.rel_dom hrel) (f.rel_cod hrel)
-  have hp : p ∈ (approxMap_toElement A A f).carrier :=
-    (mem_approxMap_toElement A A f).2 hrel
+  have hp : p ∈ (approxMap_toElement A A f).carrier := by
+    simpa [p, mem_approxMap_toElement, mkFunToken] using hrel
   let w' := insert p w
   have hw' : ↑w' ⊆ (approxMap_toElement A A f).carrier := by
     intro q hq
