@@ -25,8 +25,9 @@
 \let\origtextunderscore\_
 \renewcommand{\_}{\origtextunderscore\allowbreak}
 
-% Long inlined Lean listings can exhaust pdfTeX main memory; build with
-% LuaLaTeX (see .latexmkrc).
+% Long inlined Lean listings can exhaust pdfTeX main memory; build locally with
+% LuaLaTeX (see .latexmkrc).  arXiv's AutoTeX has the headroom for pdfLaTeX.
+% Mermaid diagrams ship as pre-rendered PNG (arXiv rejects embedded PDF figures).
 %
 % The listings are kept as real UTF-8 Lean source: every Lean operator is rendered
 % through a `literate` replacement to a proper LaTeX symbol, so the code displays with

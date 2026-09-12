@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerate arxiv.tex (full Lean appendix, one subsection per file) and compile arxiv.pdf.
+# Regenerate arxiv.tex (Lean appendix: Palomar links + descriptions) and compile arxiv.pdf.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -32,7 +32,7 @@ compile_tex() {
   }
 }
 
-echo "==> Regenerating arxiv.tex + lean-listings/ + figures/ (full Lean appendix)"
+echo "==> Regenerating arxiv.tex + lean-listings/ + figures/ (Lean module appendix)"
 if [[ "${1:-}" == "--pdf-only" ]]; then
   echo "    (--pdf-only: skipping markdown/tex regeneration)"
 else

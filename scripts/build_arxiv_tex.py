@@ -5,7 +5,7 @@ Pipeline:
   1. Drop the GitHub-only navigation preamble from ``arxiv_with_code.md``.
   2. Lift the `## Abstract` section into a LaTeX \begin{abstract}.
   3. Demote Appendix Lean-file headings so each module is a ``\\subsection``
-     (scott1972 convention), then insert \\appendix before Complete Lean source.
+     (scott1972 convention), then insert \\appendix before Lean source.
   4. Strip manual section numbers so LaTeX does the numbering.
   5. Replace fenced Lean/math/bash with \\lstinputlisting blocks; render mermaid to PDF.
   6. Inject AI model-card acknowledgements; pandoc -> LaTeX; splice placeholders.
@@ -36,6 +36,7 @@ FIGURES_DIR = ROOT / "figures"
 PUPPETEER_CONFIG = SCRIPTS / "puppeteer-config.json"
 LISTING_CHUNK_LINES = 400
 _WRITTEN_LISTINGS: set[Path] = set()
+_WRITTEN_FIGURES: set[Path] = set()
 
 AUTHOR = "Lars Warren Ericson"
 COMPANY = "Catskills Research Company"
@@ -61,14 +62,19 @@ def find_chrome() -> str | None:
 def render_mermaid(code: str, idx: int) -> str:
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     mmd_path = FIGURES_DIR / f"figure-{idx:03d}.mmd"
+    png_path = FIGURES_DIR / f"figure-{idx:03d}.png"
     pdf_path = FIGURES_DIR / f"figure-{idx:03d}.pdf"
     code_stripped = code.strip() + "\n"
     if (
         mmd_path.is_file()
-        and pdf_path.is_file()
+        and png_path.is_file()
         and mmd_path.read_text(encoding="utf-8") == code_stripped
     ):
-        return pdf_path.relative_to(ROOT).as_posix()
+        if pdf_path.is_file():
+            pdf_path.unlink()
+        _WRITTEN_FIGURES.add(png_path.resolve())
+        _WRITTEN_FIGURES.add(mmd_path.resolve())
+        return png_path.relative_to(ROOT).as_posix()
     mmd_path.write_text(code_stripped, encoding="utf-8")
 
     mmdc = shutil.which("mmdc")
@@ -81,14 +87,20 @@ def render_mermaid(code: str, idx: int) -> str:
     chrome = find_chrome()
     if chrome:
         env["PUPPETEER_EXECUTABLE_PATH"] = chrome
-    cmd = [mmdc, "-i", str(mmd_path), "-o", str(pdf_path), "--pdfFit", "-b", "transparent"]
+    # Raster PNG for arXiv (embedded PDF figures are rejected). Scale 3 keeps
+    # the diagrams sharp when included at text width.
+    cmd = [mmdc, "-i", str(mmd_path), "-o", str(png_path), "-b", "white", "-s", "3"]
     if PUPPETEER_CONFIG.is_file():
         cmd += ["-p", str(PUPPETEER_CONFIG)]
     proc = subprocess.run(cmd, env=env, capture_output=True, text=True, check=False)
-    if proc.returncode != 0 or not pdf_path.is_file():
+    if proc.returncode != 0 or not png_path.is_file():
         sys.stderr.write(proc.stdout + "\n" + proc.stderr + "\n")
         raise RuntimeError(f"mmdc failed to render figure {idx}")
-    return pdf_path.relative_to(ROOT).as_posix()
+    if pdf_path.is_file():
+        pdf_path.unlink()
+    _WRITTEN_FIGURES.add(png_path.resolve())
+    _WRITTEN_FIGURES.add(mmd_path.resolve())
+    return png_path.relative_to(ROOT).as_posix()
 
 
 def extract_title() -> str:
@@ -105,9 +117,9 @@ HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 FENCE_RE = re.compile(r"^```([^\n]*)\n(.*?)^```\s*$", re.MULTILINE | re.DOTALL)
 MANUAL_SECTION_NUM = re.compile(r"^(#{1,6})[ \t]+\d+(?:\.\d+)*\.?[ \t]+", re.MULTILINE)
 NARRATIVE_MARKER = "# Narrative + Lean source (from arxiv.md)"
-# After normalize_appendix_headings: `### Scott1982/...File.lean` precedes each fence.
+# After normalize_appendix_headings: linked `### [`path`](url)` Lean-file titles.
 LEAN_FILE_HEADING_RE = re.compile(
-    r"^###\s+(Scott1982(?:\.lean|/[\w./-]+\.lean))\s*$"
+    r"^###\s+\[`((?:Challenge|Solution|Scott1982)(?:\.lean|/[\w./-]+\.lean))`\]"
 )
 APPENDIX_HEADING_RE = re.compile(
     r"^##\s+Appendix\s+[A-Z]\s*[-\u2013\u2014]+\s*(.+)$", re.MULTILINE
@@ -164,23 +176,23 @@ def drop_github_nav(text: str) -> str:
 def normalize_appendix_headings(text: str) -> str:
     """Match scott1972 heading demotion so each Lean file becomes a ``\\subsection``.
 
-    ``# Appendix A: Complete Lean source`` → ``## Complete Lean source``
+    ``# Appendix A: Lean source`` → ``## Lean source``
     (pandoc shift-1 → ``\\section``).
 
-    ``## `Scott1982/...File.lean``` → ``### Scott1982/...File.lean``
+    ``## [`Scott1982/...File.lean`](url)`` → ``### [`Scott1982/...File.lean`](url)``
     (pandoc shift-1 → ``\\subsection``).
 
     Also drop the redundant literal "Appendix X --" prefix from any Composer
     ``## Appendix A/B -- ...`` headings if present.
     """
     text = re.sub(
-        r"^#\s+Appendix A: Complete Lean source\s*$",
-        "## Complete Lean source",
+        r"^#\s+Appendix A: Lean source\s*$",
+        "## Lean source",
         text,
         flags=re.MULTILINE,
     )
     text = re.sub(
-        r"^##\s+`(Scott1982(?:\.lean|/[^`]+))`\s*$",
+        r"^##\s+(\[`(?:Challenge|Solution|Scott1982)(?:\.lean|/[^`]+)`\]\([^)]+\))\s*$",
         r"### \1",
         text,
         flags=re.MULTILINE,
@@ -269,6 +281,14 @@ def prune_stale_listings() -> None:
         return
     for path in LISTINGS_DIR.iterdir():
         if path.is_file() and path.resolve() not in _WRITTEN_LISTINGS:
+            path.unlink()
+
+
+def prune_stale_figures() -> None:
+    if not FIGURES_DIR.is_dir():
+        return
+    for path in FIGURES_DIR.iterdir():
+        if path.is_file() and path.resolve() not in _WRITTEN_FIGURES:
             path.unlink()
 
 
@@ -415,8 +435,8 @@ def cleanup_pandoc_latex(latex: str) -> str:
         latex,
     )
     latex = re.sub(
-        r"\\section\{Appendix A: Complete Lean source\}",
-        r"\\section{Complete Lean source}",
+        r"\\section\{Appendix A: Lean source\}",
+        r"\\section{Lean source}",
         latex,
     )
     latex = re.sub(r"\n{3,}", "\n\n", latex)
@@ -424,7 +444,7 @@ def cleanup_pandoc_latex(latex: str) -> str:
 
 
 def insert_appendix_command(latex: str) -> str:
-    marker = r"\section{Complete Lean source}"
+    marker = r"\section{Lean source}"
     if marker not in latex:
         raise RuntimeError(f"missing {marker!r} in LaTeX output")
     return latex.replace(marker, r"\appendix" + "\n" + marker, 1)
@@ -503,6 +523,7 @@ def main() -> int:
     for d in (LISTINGS_DIR, FIGURES_DIR):
         d.mkdir(parents=True, exist_ok=True)
     _WRITTEN_LISTINGS.clear()
+    _WRITTEN_FIGURES.clear()
 
     raw = SRC.read_text(encoding="utf-8")
     body = drop_github_nav(raw)
@@ -517,6 +538,7 @@ def main() -> int:
     body = github_math_to_tex(body)
     body, placeholders = replace_fences(body)
     prune_stale_listings()
+    prune_stale_figures()
 
     latex_body = pandoc_to_latex(body, shift=True)
     latex_body = inject_placeholders(latex_body, placeholders)
@@ -532,11 +554,11 @@ def main() -> int:
     document = build_document(preamble, title_page, latex_body)
     changed = write_if_changed(OUT, document)
     n_listings = sum(1 for p in LISTINGS_DIR.iterdir() if p.is_file()) if LISTINGS_DIR.is_dir() else 0
-    n_figures = sum(1 for p in FIGURES_DIR.glob("*.pdf"))
+    n_figures = sum(1 for p in FIGURES_DIR.glob("*.png"))
     note = "updated" if changed else "unchanged"
     print(
         f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size:,} bytes, "
-        f"full Lean appendix, {n_listings} listings, "
+        f"Lean module appendix, {n_listings} listings, "
         f"{n_figures} mermaid figures, {note})"
     )
     return 0
