@@ -3,23 +3,41 @@
 
 ## Abstract
 
-In 1982 Dana Scott published *Domains for Denotational Semantics* (ICALP, LNCS 140),
-presenting domains via **information systems**: finite consistency and entailment on data
+In 1982 Dana Scott published Domains for Denotational Semantics (ICALP, LNCS 140),
+presenting domains via information systems: finite consistency and entailment on data
 objects (tokens), with domain elements recovered as consistent, deductively closed sets.
-This is the third of Scott's major presentations of domain theory—after continuous lattices
-**[Sco72]** and neighbourhood systems (PRG-19, **[Sco81]**) — and is the most explicitly
+This is the third of Scott's major presentations of domain theory, after continuous lattices
+[Sco72] and neighbourhood systems (PRG-19, [Sco81]), and is the most explicitly
 constructive of the three. Companion Lean formalizations of those earlier presentations are
-[`scott1972`](https://github.com/catskillsresearch/scott1972) **[SR72]** and
-[`scott1980`](https://github.com/catskillsresearch/scott1980) **[ER80]**.
+scott1972 [SR72] and scott1980 [ER80].
 
-This Lean 4 formalization targets the **entire paper** (Sections 1–8). We strive to avoid
-the law of excluded middle. Every completed module is audited with `#print axioms`; the
-target footprint is `#print axioms ⊆ {propext, Quot.sound}`. Choice-tainted mathlib `Finset`
-operations are replaced by the prelude in `Scott1982/Constructive.lean`. The Lean 4
-sources are not reproduced here; each module is listed in the Lean source appendix with
-a hyperlink to the registered Palomar archive snapshot
-[`d3221eec09505aa75e1b818aabc73f1f04339bdc`](https://github.com/PalomarArchive/catskillsresearch--scott1982--ca9aa6e0a302/tree/d3221eec09505aa75e1b818aabc73f1f04339bdc)
+This Lean 4 formalization targets the entire paper (Sections 1-8). We strive to avoid
+the law of excluded middle. Every completed module is audited by printing its axioms;
+the target footprint is only propext and Quot.sound. Choice-tainted mathlib Finset
+operations are replaced by a constructive prelude. The Lean 4 sources are not
+reproduced here; each module is listed in the Lean source appendix with a pointer
+to the registered Palomar archive snapshot d3221eec09505aa75e1b818aabc73f1f04339bdc
 and a brief description of its contents.
+
+---
+
+## Classification
+
+**arXiv:** `cs.LO` (primary); `cs.PL`, `math.LO`.
+
+**ACM CCS (1998):**
+F.3.2 [Logics and Meanings of Programs]: Semantics of Programming Languages—Denotational semantics;
+F.3.1 [Logics and Meanings of Programs]: Specifying and Verifying and Reasoning about Programs—Mechanical verification;
+F.4.1 [Mathematical Logic and Formal Languages]: Mathematical Logic—Mechanical theorem proving, Lambda calculus and related systems;
+D.3.1 [Programming Languages]: Formal Definitions and Theory—Semantics.
+*General Terms:* Theory, Verification, Languages.
+
+**MSC 2020:**
+68Q55 (primary) Semantics in the theory of computing;
+68V20 Formalization of mathematics in connection with theorem provers;
+06B35 Continuous lattices and posets, applications;
+03B70 Logic in computer science;
+18C50 Categorical semantics of formal languages.
 
 ---
 

@@ -232,6 +232,17 @@ def extract_abstract(text: str) -> tuple[str, str]:
     return abstract_md, body
 
 
+def extract_classification(text: str) -> tuple[str, str]:
+    m = re.search(
+        r"^##\s+Classification\s*\n(.*?)(?=^##\s)", text, re.DOTALL | re.MULTILINE
+    )
+    if not m:
+        return "", text
+    classification_md = m.group(1).strip()
+    body = text[: m.start()] + text[m.end() :]
+    return classification_md, body
+
+
 def extract_mermaid_captions(text: str) -> list[str]:
     """Caption each ```mermaid block from the nearest preceding markdown heading."""
     captions: list[str] = []
@@ -475,12 +486,24 @@ def cleanup_abstract_latex(latex: str) -> str:
     latex = latex.replace("\\textbf{{[}", "\\textbf{[")
     latex = latex.replace("\\texttt{{[}", "\\texttt{[")
     latex = latex.replace("{]}}", "]}")
+    latex = latex.replace("{[}", "[")
+    latex = latex.replace("{]}", "]")
     latex = re.sub(r"\\tightlist\n", "", latex)
     latex = re.sub(r"\\begin\{center\}\\rule\{.*?\}\\end\{center\}\s*", "", latex, flags=re.DOTALL)
     return latex
 
 
-def build_title_page(abstract_latex: str) -> str:
+def build_title_page(abstract_latex: str, classification_latex: str = "") -> str:
+    classification_block = ""
+    if classification_latex.strip():
+        classification_block = textwrap.dedent(
+            f"""
+
+            \\vspace{{0.6em}}
+            \\noindent\\small
+            {classification_latex.strip()}
+            """
+        ).rstrip()
     return textwrap.dedent(
         f"""
         \\title{{\\textbf{{{TITLE}}}}}
@@ -505,6 +528,7 @@ def build_title_page(abstract_latex: str) -> str:
         \\begin{{abstract}}
         {abstract_latex.strip()}
         \\end{{abstract}}
+        {classification_block}
         """
     ).strip()
 
@@ -533,6 +557,7 @@ def main() -> int:
     body = drop_composer_appendices(body)
     body = normalize_appendix_headings(body)
     abstract_md, body = extract_abstract(body)
+    classification_md, body = extract_classification(body)
     body = strip_manual_section_numbers(body)
     body = demote_inventory_headings(body)
     body = github_math_to_tex(body)
@@ -548,9 +573,15 @@ def main() -> int:
 
     abstract_latex = pandoc_to_latex(github_math_to_tex(abstract_md), shift=False) if abstract_md else ""
     abstract_latex = cleanup_abstract_latex(abstract_latex)
+    classification_latex = (
+        pandoc_to_latex(github_math_to_tex(classification_md), shift=False)
+        if classification_md
+        else ""
+    )
+    classification_latex = cleanup_abstract_latex(classification_latex)
 
     preamble = PREAMBLE.read_text(encoding="utf-8")
-    title_page = build_title_page(abstract_latex)
+    title_page = build_title_page(abstract_latex, classification_latex)
     document = build_document(preamble, title_page, latex_body)
     changed = write_if_changed(OUT, document)
     n_listings = sum(1 for p in LISTINGS_DIR.iterdir() if p.is_file()) if LISTINGS_DIR.is_dir() else 0
